@@ -28,7 +28,7 @@ A modern, full-stack AI chatbot application with inventory management capabiliti
 - Python
 - Flask
 - OpenAI API integration
-- Analytics processing
+- Postgresql for Analytics processing
 
 ## Getting Started
 
