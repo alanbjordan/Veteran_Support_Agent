@@ -1,6 +1,9 @@
-# AI Chatbot with Inventory Management
+# AI Chatbot with Analytics Dashboard
 
 A modern, full-stack AI chatbot application with inventory management capabilities, built with React and Python.
+
+
+## Warning: You must create an external database for the analytics information.
 
 ## Features
 
@@ -12,17 +15,6 @@ A modern, full-stack AI chatbot application with inventory management capabiliti
   - Conversation history
 
 - 📊 **Analytics Dashboard**
-  - Conversation summaries
-  - Sentiment analysis
-  - Keyword tracking
-  - Department categorization
-  - Action tracking
-
-- 📦 **Inventory Management**
-  - Real-time inventory viewing
-  - Car search functionality
-  - Detailed vehicle information
-  - Filter and sort capabilities
 
 ## Tech Stack
 
@@ -112,30 +104,6 @@ The application will be available at `http://localhost:3000`
     └── requirements.txt
 ```
 
-## Features in Detail
-
-### Chat Interface
-- Modern, responsive design
-- Real-time message updates
-- Markdown support for formatted text
-- Typing indicators
-- Message timestamps
-- Conversation history
-
-### Analytics
-- Conversation summaries
-- Sentiment analysis (positive, neutral, negative)
-- Keyword extraction
-- Department categorization
-- Action item tracking
-
-### Inventory Management
-- Real-time inventory updates
-- Advanced search capabilities
-- Detailed vehicle information
-- Filter and sort options
-
-## Contributing
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
