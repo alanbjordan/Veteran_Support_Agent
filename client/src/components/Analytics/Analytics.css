@@ -82,28 +82,28 @@ body {
 .analytics-summary {
   display: grid;
   grid-template-rows: auto auto;
-  gap: 24px;
-  margin-bottom: 24px;
-  padding: 24px;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 16px;
   background: var(--background-color);
   border-radius: var(--border-radius);
-  min-height: 160px;
+  min-height: 120px;
 }
 
 .analytics-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  gap: 16px;
 }
 
 .analytics-card {
   background: var(--secondary-color);
   border-radius: var(--border-radius);
-  padding: 20px;
+  padding: 12px 16px;
   box-shadow: 0 2px 4px var(--shadow-color);
   transition: transform 0.2s, box-shadow 0.2s;
   border: 1px solid var(--input-border);
-  min-height: 120px;
+  min-height: 80px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -115,30 +115,30 @@ body {
 }
 
 .analytics-card h4 {
-  margin: 0 0 8px 0;
+  margin: 0 0 4px 0;
   color: var(--bot-message-color);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
 }
 
 .analytics-value {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: bold;
   color: var(--primary-color);
-  margin: 8px 0;
+  margin: 4px 0;
 }
 
 .analytics-card small {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--typing-indicator-color);
-  margin-top: auto;
+  margin-top: 4px;
 }
 
 .analytics-table {
   background: var(--background-color);
   border-radius: var(--border-radius);
-  padding: 24px;
-  margin-top: 24px;
+  padding: 16px;
+  margin-top: 16px;
   min-height: 300px;
 }
 
@@ -146,19 +146,19 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .analytics-table-header h3 {
   margin: 0;
   color: var(--bot-message-color);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
 }
 
 .total-requests {
   color: var(--typing-indicator-color);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
 }
 
