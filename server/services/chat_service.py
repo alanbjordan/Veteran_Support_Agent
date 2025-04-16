@@ -196,7 +196,6 @@ def process_chat(user_message, conversation_history):
         "cost": cost_info,
         "latency_ms": latency_ms
     }, 200
-
 def process_tool_call(conversation_history):
     "Process a tool call and return the final response."
     if not isinstance(conversation_history, list):

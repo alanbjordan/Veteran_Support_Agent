@@ -76,7 +76,6 @@ const Analytics = () => {
   if (error) {
     return (
       <div className="analytics-container">
-        <h2>LLM Analytics</h2>
         <div className="error">{error}</div>
       </div>
     );
@@ -85,7 +84,7 @@ const Analytics = () => {
   return (
     <div className="analytics-container">
       <div className="analytics-header">
-        <h2>Model Analytics</h2>
+        <h2>Model Performance Analytics</h2>
         <div className="header-buttons">
           <button 
             className="fetch-button"
