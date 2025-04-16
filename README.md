@@ -1,28 +1,27 @@
-# AI Chatbot with Inventory Management
+# AI Chatbot with Analytics Dashboard
 
 A modern, full-stack AI chatbot application with inventory management capabilities, built with React and Python.
 
+## ⚠️ Important Note
+You must create an external PostgreSQL database for the analytics information. The application uses SQLAlchemy with PostgreSQL for data persistence.
+
 ## Features
 
-- 🤖 **AI-Powered Chat Interface**
-  - Real-time chat with AI assistant
-  - Markdown support for formatted responses
-  - Typing indicators
-  - Message timestamps
-  - Conversation history
+### 🤖 AI-Powered Chat Interface
+- Real-time chat with AI assistant
+- Markdown support for formatted responses
+- Typing indicators
+- Message timestamps
+- Conversation history
+- Car inventory search functionality
 
-- 📊 **Analytics Dashboard**
-  - Conversation summaries
-  - Sentiment analysis
-  - Keyword tracking
-  - Department categorization
-  - Action tracking
-
-- 📦 **Inventory Management**
-  - Real-time inventory viewing
-  - Car search functionality
-  - Detailed vehicle information
-  - Filter and sort capabilities
+### 📊 Analytics Dashboard
+- Real-time cost tracking
+- Token usage monitoring
+- Request history
+- Model performance metrics
+- CSV report generation
+- Data reset capabilities
 
 ## Tech Stack
 
@@ -36,7 +35,8 @@ A modern, full-stack AI chatbot application with inventory management capabiliti
 - Python
 - Flask
 - OpenAI API integration
-- Analytics processing
+- PostgreSQL for Analytics processing
+- SQLAlchemy ORM
 
 ## Getting Started
 
@@ -44,6 +44,7 @@ A modern, full-stack AI chatbot application with inventory management capabiliti
 - Node.js (v14 or higher)
 - Python 3.8 or higher
 - OpenAI API key
+- PostgreSQL database
 
 ### Installation
 
@@ -69,6 +70,9 @@ pip install -r requirements.txt
 Create a `.env` file in the server directory with:
 ```
 OPENAI_API_KEY=your_api_key_here
+DATABASE_URL=postgresql://username:password@localhost:5432/dbname
+SECRET_KEY=your_secret_key_here
+CORS_ORIGINS=http://localhost:3000
 ```
 
 ### Running the Application
@@ -100,12 +104,24 @@ The application will be available at `http://localhost:3000`
 │   │   │   │   ├── ChatInput.jsx
 │   │   │   │   └── InventoryDisplay.jsx
 │   │   │   └── Analytics/
+│   │   │       ├── index.jsx
+│   │   │       ├── Analytics.css
+│   │   │       ├── AnalyticsCard.jsx
+│   │   │       ├── AnalyticsSummary.jsx
+│   │   │       └── AnalyticsTable.jsx
 │   │   └── App.js
 │   └── package.json
 └── server/
     ├── app.py
+    ├── config.py
+    ├── database/
+    │   └── session.py
+    ├── models/
+    │   └── sql_models.py
     ├── routes/
-    │   └── chat_routes.py
+    │   ├── chat_routes.py
+    │   ├── analytics_routes.py
+    │   └── all_routes.py
     ├── services/
     │   ├── chat_service.py
     │   └── analytics_service.py
@@ -121,19 +137,17 @@ The application will be available at `http://localhost:3000`
 - Typing indicators
 - Message timestamps
 - Conversation history
+- Car inventory search
 
 ### Analytics
-- Conversation summaries
-- Sentiment analysis (positive, neutral, negative)
-- Keyword extraction
-- Department categorization
-- Action item tracking
-
-### Inventory Management
-- Real-time inventory updates
-- Advanced search capabilities
-- Detailed vehicle information
-- Filter and sort options
+- Total cost tracking
+- Request count
+- Average cost per request
+- Token usage (sent/received)
+- Recent request history
+- Cost by model
+- CSV report generation
+- Data reset functionality
 
 ## Contributing
 
@@ -152,3 +166,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - OpenAI for their API
 - React.js community
 - Python Flask community
+- PostgreSQL community
