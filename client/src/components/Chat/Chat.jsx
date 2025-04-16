@@ -201,7 +201,7 @@ const Chat = ({ analyticsData, updateAnalytics }) => {
   return (
     <div className="chat-container">
       <div className="chat-header">
-        <h2>Chat with our AI</h2>
+        <h2>Chat with AI</h2>
         <div className="header-buttons">
           <InventoryDisplay />
           <button 

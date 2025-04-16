@@ -14,14 +14,14 @@ const InventoryDisplay = () => {
         className="inventory-button"
         onClick={handleInventoryClick}
       >
-        View Inventory
+        View Data
       </button>
       
       {isOpen && (
         <div className="inventory-modal">
           <div className="inventory-modal-content">
             <div className="inventory-modal-header">
-              <h3>Current Inventory</h3>
+              <h3>Current Data</h3>
               <button 
                 className="close-button"
                 onClick={() => setIsOpen(false)}
