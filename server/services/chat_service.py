@@ -133,6 +133,9 @@ def process_chat(user_message, conversation_history):
         # Add time context message
         conversation_history.append(get_time_context_message())
     
+    # Record start time for latency tracking
+    start_time = datetime.utcnow()
+    
     # Call ChatCompletion API using the new tools syntax
     completion = client.chat.completions.create(
         model=model,
@@ -140,6 +143,10 @@ def process_chat(user_message, conversation_history):
         #tools=tools,
         max_completion_tokens=750
     )
+    
+    # Calculate latency in milliseconds
+    end_time = datetime.utcnow()
+    latency_ms = int((end_time - start_time).total_seconds() * 1000)
     
     message = completion.choices[0].message
     
@@ -150,29 +157,9 @@ def process_chat(user_message, conversation_history):
         completion_tokens=token_usage.completion_tokens
     )
     
-    # Store analytics data
-    store_request_analytics(token_usage, cost_info)
+    # Store analytics data with latency
+    store_request_analytics(token_usage, cost_info, latency_ms=latency_ms)
     
-    """
-    # Check if a tool call was triggered
-    tool_call_detected = False
-    if message.tool_calls and len(message.tool_calls) > 0:
-        tool_call_detected = True
-        tool_call = message.tool_calls[0]
-        func_name = tool_call.function.name
-        args_str = tool_call.function.arguments
-        
-        try:
-            func_args = json.loads(args_str)
-        except Exception as parse_error:
-            assistant_response = "Error parsing tool arguments."
-        else:
-            # For tool calls, we'll just return a placeholder response
-            # The actual tool call processing will happen in the tool-call-result endpoint
-            assistant_response = "Processing your request..."
-    else:
-        assistant_response = message.content or ""
-    """
     assistant_response = message.content or ""
     # Append the assistant's response to the conversation history
     # Include the tool_calls property if it exists
@@ -201,14 +188,13 @@ def process_chat(user_message, conversation_history):
     return {
         "chat_response": assistant_response,
         "conversation_history": conversation_history,
-        #"tool_call_detected": tool_call_detected,
-        #"summary": summary,
         "token_usage": {
             "prompt_tokens": token_usage.prompt_tokens,
             "completion_tokens": token_usage.completion_tokens,
             "total_tokens": token_usage.total_tokens
         },
-        "cost": cost_info
+        "cost": cost_info,
+        "latency_ms": latency_ms
     }, 200
 
 def process_tool_call(conversation_history):

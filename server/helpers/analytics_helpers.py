@@ -19,6 +19,9 @@ def get_analytics_summary():
         total_sent_tokens = ScopedSession.query(func.sum(AnalyticsData.prompt_tokens)).scalar() or 0
         total_received_tokens = ScopedSession.query(func.sum(AnalyticsData.completion_tokens)).scalar() or 0
         
+        # Get average latency
+        average_latency = ScopedSession.query(func.avg(AnalyticsData.latency_ms)).scalar() or 0
+        
         # Get recent requests
         recent_requests = ScopedSession.query(AnalyticsData).order_by(AnalyticsData.date.desc()).limit(10).all()
         
@@ -28,7 +31,8 @@ def get_analytics_summary():
             "model": req.model,
             "sentTokens": req.prompt_tokens,
             "receivedTokens": req.completion_tokens,
-            "cost": float(req.total_cost)  # Convert to float explicitly
+            "cost": float(req.total_cost),  # Convert to float explicitly
+            "latency_ms": req.latency_ms
         } for req in recent_requests]
         
         # Get cost by model
@@ -47,6 +51,7 @@ def get_analytics_summary():
             "averageCostPerRequest": float(average_cost),
             "totalSentTokens": int(total_sent_tokens),
             "totalReceivedTokens": int(total_received_tokens),
+            "averageLatency": float(average_latency),
             "requestsByDate": requests_by_date,
             "costByModel": cost_by_model
         }
@@ -58,6 +63,7 @@ def get_analytics_summary():
             "averageCostPerRequest": 0,
             "totalSentTokens": 0,
             "totalReceivedTokens": 0,
+            "averageLatency": 0,
             "requestsByDate": [],
             "costByModel": {}
         } 

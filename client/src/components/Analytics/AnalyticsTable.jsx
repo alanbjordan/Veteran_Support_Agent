@@ -3,7 +3,10 @@ import React from 'react';
 const AnalyticsTable = ({ requests }) => {
   return (
     <div className="analytics-table">
-      <h3>Recent Requests</h3>
+      <div className="analytics-table-header">
+        <h3>Recent Requests</h3>
+        <span className="total-requests">Total: {requests.length}</span>
+      </div>
       <table>
         <thead>
           <tr>
@@ -13,6 +16,7 @@ const AnalyticsTable = ({ requests }) => {
             <th>Recv</th>
             <th>Total</th>
             <th>Cost</th>
+            <th>Latency</th>
           </tr>
         </thead>
         <tbody>
@@ -28,6 +32,7 @@ const AnalyticsTable = ({ requests }) => {
                 <td>{request.receivedTokens.toLocaleString()}</td>
                 <td>{(request.sentTokens + request.receivedTokens).toLocaleString()}</td>
                 <td>${cost.toFixed(4)}</td>
+                <td>{request.latency_ms}ms</td>
               </tr>
             );
           })}

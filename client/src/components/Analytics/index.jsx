@@ -13,6 +13,7 @@ const Analytics = () => {
     averageCostPerRequest: 0,
     totalSentTokens: 0,
     totalReceivedTokens: 0,
+    averageLatency: 0,
     requestsByDate: [],
     costByModel: {}
   });
@@ -43,6 +44,7 @@ const Analytics = () => {
         averageCostPerRequest: 0,
         totalSentTokens: 0,
         totalReceivedTokens: 0,
+        averageLatency: 0,
         requestsByDate: [],
         costByModel: {}
       };

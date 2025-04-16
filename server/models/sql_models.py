@@ -28,6 +28,7 @@ class AnalyticsData(db.Model):
     prompt_cost = db.Column(db.Numeric(10, 6), nullable=False)
     completion_cost = db.Column(db.Numeric(10, 6), nullable=False)
     total_cost = db.Column(db.Numeric(10, 6), nullable=False)
+    latency_ms = db.Column(db.Integer, nullable=False)  # Latency in milliseconds
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):

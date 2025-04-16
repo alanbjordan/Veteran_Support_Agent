@@ -5,7 +5,7 @@ from models.sql_models import AnalyticsData
 from database.session import ScopedSession
 from helpers.analytics_helpers import get_analytics_summary as get_summary_helper
 
-def store_request_analytics(token_usage, cost_info, model="o3-mini-2025-01-31"):
+def store_request_analytics(token_usage, cost_info, model="o3-mini-2025-01-31", latency_ms=0):
     """Store analytics data for a request."""
     try:
         # Check if token_usage is a dictionary or an object with attributes
@@ -28,7 +28,8 @@ def store_request_analytics(token_usage, cost_info, model="o3-mini-2025-01-31"):
             total_tokens=total_tokens,
             prompt_cost=cost_info["prompt_cost"],
             completion_cost=cost_info["completion_cost"],
-            total_cost=cost_info["total_cost"]
+            total_cost=cost_info["total_cost"],
+            latency_ms=latency_ms
         )
         ScopedSession.add(analytics)
         ScopedSession.commit()
