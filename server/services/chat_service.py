@@ -12,7 +12,7 @@ from services.analytics_service import store_request_analytics
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # This is the model that we are using for the chat service
-model="gpt-3.5-turbo-0125"
+model="gpt-4.1-nano-2025-04-14"
 
 def get_system_message():
     """Return the system message for the chat."""
