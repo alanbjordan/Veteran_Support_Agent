@@ -15,7 +15,20 @@
   border-radius: 0.5rem;
   font-size: 1rem;
   outline: none;
-  transition: border-color 0.2s;
+  resize: none;
+  height: 42px;
+  max-height: 150px;
+  line-height: 1.5;
+  font-family: inherit;
+  box-sizing: border-box;
+  margin: 0;
+  display: block;
+  overflow-y: hidden;
+}
+
+/* Only apply transition when height is increasing */
+.chat-input.expanding {
+  transition: height 0.2s;
 }
 
 .chat-input:focus {
@@ -36,6 +49,8 @@
   font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.2s;
+  align-self: flex-end;
+  height: 42px;
 }
 
 .send-button:hover:not(:disabled) {
