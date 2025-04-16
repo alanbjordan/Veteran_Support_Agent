@@ -36,7 +36,7 @@ const AnalyticsTable = ({ requests }) => {
                 <td>{request.sentTokens.toLocaleString()}</td>
                 <td>{request.receivedTokens.toLocaleString()}</td>
                 <td>{(request.sentTokens + request.receivedTokens).toLocaleString()}</td>
-                <td>${cost.toFixed(4)}</td>
+                <td>${cost.toFixed(5)}</td>
                 <td>{request.latency_ms}ms</td>
               </tr>
             );
