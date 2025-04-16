@@ -3,7 +3,10 @@ import React from 'react';
 const AnalyticsTable = ({ requests }) => {
   return (
     <div className="analytics-table">
-      <h3>Recent Requests</h3>
+      <div className="analytics-table-header">
+        <h3>Recent Requests</h3>
+        <span className="total-requests">Total: {requests.length}</span>
+      </div>
       <table>
         <thead>
           <tr>
