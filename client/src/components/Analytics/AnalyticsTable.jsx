@@ -25,7 +25,7 @@ const AnalyticsTable = ({ requests }) => {
           </tr>
         </thead>
         <tbody>
-          {requests.slice(0, 10).map((request, index) => {
+          {requests.map((request, index) => {
             // Ensure cost is a number
             const cost = typeof request.cost === 'number' ? request.cost : 0;
             
