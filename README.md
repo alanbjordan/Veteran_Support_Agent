@@ -1,6 +1,6 @@
-# AI Chatbot with Analytics Dashboard
+# AI Chatbot Optimization Template with Analytics Dashboard
 
-A modern, full-stack AI chatbot application with inventory management capabilities, built with React and Python.
+This repository provides a template designed to help developers build and optimize AI-powered chatbots. The integrated analytics dashboard offers insights into user interactions and chatbot performance, enabling continuous improvement and fine-tuning of chatbot operations. Use this template as a starting point to accelerate development, deploy robust solutions, and leverage data-driven optimizations for your chatbot projects.
 
 ## ⚠️ Important Note
 You must create an external PostgreSQL database for the analytics information. The application uses SQLAlchemy with PostgreSQL for data persistence.
