@@ -13,6 +13,7 @@ const AnalyticsTable = ({ requests }) => {
             <th>Recv</th>
             <th>Total</th>
             <th>Cost</th>
+            <th>Latency</th>
           </tr>
         </thead>
         <tbody>
@@ -28,6 +29,7 @@ const AnalyticsTable = ({ requests }) => {
                 <td>{request.receivedTokens.toLocaleString()}</td>
                 <td>{(request.sentTokens + request.receivedTokens).toLocaleString()}</td>
                 <td>${cost.toFixed(4)}</td>
+                <td>{request.latency_ms}ms</td>
               </tr>
             );
           })}

@@ -2,24 +2,37 @@ import React from 'react';
 import AnalyticsCard from './AnalyticsCard';
 
 const AnalyticsSummary = ({ data }) => {
+  // Add null checks for all values
+  const totalCost = data?.totalCost || 0;
+  const averageCostPerRequest = data?.averageCostPerRequest || 0;
+  const totalRequests = data?.totalRequests || 0;
+  const totalSentTokens = data?.totalSentTokens || 0;
+  const totalReceivedTokens = data?.totalReceivedTokens || 0;
+  const averageLatency = data?.averageLatency || 0;
+
   return (
     <div className="analytics-summary">
       <AnalyticsCard 
         title="Cost" 
-        value={`$${data.totalCost.toFixed(4)}`} 
-        subtitle={`Avg: $${data.averageCostPerRequest.toFixed(4)}/req`} 
+        value={`$${totalCost.toFixed(4)}`} 
+        subtitle={`Avg: $${averageCostPerRequest.toFixed(4)}/req`} 
       />
       <AnalyticsCard 
         title="Requests" 
-        value={data.totalRequests} 
+        value={totalRequests} 
       />
       <AnalyticsCard 
         title="Sent Tokens" 
-        value={data.totalSentTokens.toLocaleString()} 
+        value={totalSentTokens.toLocaleString()} 
       />
       <AnalyticsCard 
         title="Received Tokens" 
-        value={data.totalReceivedTokens.toLocaleString()} 
+        value={totalReceivedTokens.toLocaleString()} 
+      />
+      <AnalyticsCard 
+        title="Avg Latency" 
+        value={`${averageLatency.toFixed(0)}ms`} 
+        subtitle="Response Time"
       />
     </div>
   );
