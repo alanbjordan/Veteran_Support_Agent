@@ -25,7 +25,7 @@ const AnalyticsTable = ({ requests }) => {
           </tr>
         </thead>
         <tbody>
-          {requests.slice(0, 10).map((request, index) => {
+          {requests.map((request, index) => {
             // Ensure cost is a number
             const cost = typeof request.cost === 'number' ? request.cost : 0;
             
@@ -36,7 +36,7 @@ const AnalyticsTable = ({ requests }) => {
                 <td>{request.sentTokens.toLocaleString()}</td>
                 <td>{request.receivedTokens.toLocaleString()}</td>
                 <td>{(request.sentTokens + request.receivedTokens).toLocaleString()}</td>
-                <td>${cost.toFixed(4)}</td>
+                <td>${cost.toFixed(5)}</td>
                 <td>{request.latency_ms}ms</td>
               </tr>
             );

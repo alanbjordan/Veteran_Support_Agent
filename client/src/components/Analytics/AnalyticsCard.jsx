@@ -5,10 +5,13 @@
 
 import React from 'react';
 
-const AnalyticsCard = ({ title, value, subtitle }) => {
+const AnalyticsCard = ({ title, value, subtitle, icon }) => {
   return (
     <div className="analytics-card">
-      <h4>{title}</h4>
+      <div className="analytics-card-header">
+        {icon && <div className="analytics-card-icon">{icon}</div>}
+        <h4>{title}</h4>
+      </div>
       <p className="analytics-value">{value}</p>
       {subtitle && <small>{subtitle}</small>}
     </div>

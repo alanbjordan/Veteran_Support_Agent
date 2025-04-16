@@ -5,6 +5,7 @@
 
 import React from 'react';
 import AnalyticsCard from './AnalyticsCard';
+import { FaDollarSign, FaChartLine } from 'react-icons/fa';
 
 const AnalyticsSummary = ({ data }) => {
   // Add null checks for all values
@@ -20,13 +21,15 @@ const AnalyticsSummary = ({ data }) => {
     <div className="analytics-summary">
       {/* Top row - Cost metrics */}
       <div className="analytics-row">
-        <AnalyticsCard 
-          title="Total Cost" 
-          value={`$${totalCost.toFixed(4)}`}
+        <AnalyticsCard
+          title="Total Cost"
+          value={`$${totalCost.toFixed(5)}`}
+          icon={<FaDollarSign />}
         />
-        <AnalyticsCard 
-          title="Avg Cost per Request" 
-          value={`$${averageCostPerRequest.toFixed(4)}/req`}
+        <AnalyticsCard
+          title="Average Cost"
+          value={`$${averageCostPerRequest.toFixed(5)}/req`}
+          icon={<FaChartLine />}
         />
         <AnalyticsCard 
           title="Avg Latency" 
