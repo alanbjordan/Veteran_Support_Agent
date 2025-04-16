@@ -47,7 +47,8 @@ def calculate_token_cost(prompt_tokens, completion_tokens, model="o1-2024-12-17"
         "gpt-4o-mini-search-preview-2025-03-11": {"input": 0.15, "cached": None, "output": 0.60},
         "gpt-4o-search-preview-2025-03-11": {"input": 2.50, "cached": None, "output": 10.00},
         "computer-use-preview-2025-03-11": {"input": 3.00, "cached": None, "output": 12.00},
-        "ft:gpt-4.1-mini-2025-04-14:personal:a001:BMR8CaY3": {"input": 0.80, "cached": 0.20, "output": 3.20}
+        "ft:gpt-4.1-mini-2025-04-14:personal:a001:BMR8CaY3": {"input": 0.80, "cached": 0.20, "output": 3.20},
+        "gpt-3.5-turbo-0125": {"input": 0.50, "cached": None, "output": 1.50}
     }
     
     rates = pricing.get(model)
