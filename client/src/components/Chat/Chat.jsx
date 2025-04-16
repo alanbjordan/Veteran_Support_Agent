@@ -1,3 +1,8 @@
+/**
+ * File: client/src/components/Chat/Chat.jsx
+ * Description: Main chat component that manages the chat interface and message display
+ */
+
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import apiClient from '../../utils/apiClient';

@@ -1,3 +1,8 @@
+/**
+ * File: client/src/components/Analytics/index.jsx
+ * Description: Main analytics component that serves as the container for analytics features
+ */
+
 // client/src/components/Analytics/index.jsx
 
 import React, { useState, useEffect, useRef } from 'react';

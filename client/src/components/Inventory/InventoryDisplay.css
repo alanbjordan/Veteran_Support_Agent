@@ -1,3 +1,8 @@
+/**
+ * File: client/src/components/Inventory/InventoryDisplay.css
+ * Description: Styles for the inventory display component
+ */
+
 .inventory-display {
   position: fixed;
   bottom: 20px;

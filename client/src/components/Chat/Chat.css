@@ -1,3 +1,8 @@
+/**
+ * File: client/src/components/Chat/Chat.css
+ * Description: Styles for the main chat component and its layout
+ */
+
 :root {
     --primary-color: #c3002f;
     --primary-light: #e60035;

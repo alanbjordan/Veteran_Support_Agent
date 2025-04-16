@@ -1,3 +1,8 @@
+/**
+ * File: client/src/components/Analytics/AnalyticsCard.jsx
+ * Description: Component for displaying individual analytics metrics in a card format
+ */
+
 import React from 'react';
 
 const AnalyticsCard = ({ title, value, subtitle }) => {

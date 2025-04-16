@@ -1,3 +1,8 @@
+/**
+ * File: client/src/index.js
+ * Description: Application entry point that renders the root React component
+ */
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';

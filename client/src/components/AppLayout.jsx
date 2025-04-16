@@ -1,3 +1,8 @@
+/**
+ * File: client/src/components/AppLayout.jsx
+ * Description: Main layout component that provides the structure for the application
+ */
+
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Chat from './Chat/Chat';

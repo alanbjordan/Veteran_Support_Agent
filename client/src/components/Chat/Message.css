@@ -1,3 +1,8 @@
+/**
+ * File: client/src/components/Chat/Message.css
+ * Description: Styles for individual chat messages
+ */
+
 .message {
   display: flex;
   margin: 1rem 0;

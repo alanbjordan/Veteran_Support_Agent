@@ -1,3 +1,8 @@
+/**
+ * File: client/src/components/Chat/ChatInput.css
+ * Description: Styles for the chat input component
+ */
+
 .chat-input-container {
   display: flex;
   gap: 1rem;

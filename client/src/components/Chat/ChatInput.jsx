@@ -1,3 +1,8 @@
+/**
+ * File: client/src/components/Chat/ChatInput.jsx
+ * Description: Component for handling user input in the chat interface
+ */
+
 import React, { useRef, useEffect } from 'react';
 import './ChatInput.css';
 

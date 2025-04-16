@@ -1,3 +1,8 @@
+/**
+ * File: client/src/components/Analytics/AnalyticsSummary.jsx
+ * Description: Component for displaying analytics summary information
+ */
+
 import React from 'react';
 import AnalyticsCard from './AnalyticsCard';
 

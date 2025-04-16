@@ -1,3 +1,8 @@
+/**
+ * File: client/src/components/Analytics/AnalyticsTable.jsx
+ * Description: Component for displaying analytics data in a tabular format
+ */
+
 import React from 'react';
 
 const AnalyticsTable = ({ requests }) => {

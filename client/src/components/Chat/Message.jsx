@@ -1,3 +1,8 @@
+/**
+ * File: client/src/components/Chat/Message.jsx
+ * Description: Component for rendering individual chat messages
+ */
+
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';

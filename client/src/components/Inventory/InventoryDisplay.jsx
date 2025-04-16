@@ -1,3 +1,8 @@
+/**
+ * File: client/src/components/Inventory/InventoryDisplay.jsx
+ * Description: Component for displaying and managing inventory information
+ */
+
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../utils/apiClient';
 import './InventoryDisplay.css';

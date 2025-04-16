@@ -1,3 +1,8 @@
+/**
+ * File: client/src/components/Chat/InventoryDisplay.jsx
+ * Description: Component for displaying inventory information in the chat interface
+ */
+
 import React, { useState } from 'react';
 import './InventoryDisplay.css';
 
