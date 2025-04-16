@@ -13,7 +13,6 @@ You must create an external PostgreSQL database for the analytics information. T
 - Typing indicators
 - Message timestamps
 - Conversation history
-- Car inventory search functionality
 
 ### 📊 Analytics Dashboard
 - Real-time cost tracking
@@ -127,35 +126,6 @@ The application will be available at `http://localhost:3000`
     │   └── analytics_service.py
     └── requirements.txt
 ```
-
-## Features in Detail
-
-### Chat Interface
-- Modern, responsive design
-- Real-time message updates
-- Markdown support for formatted text
-- Typing indicators
-- Message timestamps
-- Conversation history
-- Car inventory search
-
-### Analytics
-- Total cost tracking
-- Request count
-- Average cost per request
-- Token usage (sent/received)
-- Recent request history
-- Cost by model
-- CSV report generation
-- Data reset functionality
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
 
 ## License
 
