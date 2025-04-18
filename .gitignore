@@ -6,4 +6,4 @@ build/
 
 # Ignore coverage directory
 coverage/
-    
+*.ipynb
