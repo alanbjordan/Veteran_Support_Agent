@@ -457,11 +457,26 @@ body {
   background: var(--secondary-color);
   border-radius: var(--border-radius);
   box-shadow: 0 4px 24px var(--shadow-color);
-  max-width: 420px;
+  max-width: 700px; /* widened from 420px */
   width: 95%;
   padding: 0;
   animation: fadeIn 0.2s;
 }
+
+.analytics-modal-table td,
+.analytics-modal-table th {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  max-width: 320px; /* adjust as needed for your modal width */
+}
+
+.analytics-modal-table pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+  max-width: 320px; /* adjust as needed for your modal width */
+}
+
 .analytics-modal-header {
   display: flex;
   justify-content: space-between;
