@@ -24,11 +24,15 @@ const Analytics = () => {
   });
   const [error, setError] = useState(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const lastDataRef = useRef(null);
 
   // Function to fetch analytics data
   const fetchAnalyticsData = async () => {
+    setIsFetching(true);
     try {
+      // Add a 1 second delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 1000));
       const response = await apiClient.get('/analytics/summary');
       const newData = response.data;
       setAnalyticsData(newData);
@@ -37,6 +41,8 @@ const Analytics = () => {
     } catch (err) {
       console.error('Error fetching analytics data:', err);
       setError('Failed to load analytics data. Please try again later.');
+    } finally {
+      setIsFetching(false);
     }
   };
 
@@ -91,12 +97,20 @@ const Analytics = () => {
       <div className="analytics-header">
         <h2>Model Performance Analytics</h2>
         <div className="header-buttons">
-          <button 
-            className="fetch-button"
-            onClick={fetchAnalyticsData}
-          >
-            Fetch Data
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            {isFetching && (
+              <div className="loading-bar" style={{ marginRight: 8 }}>
+                <span className="loading-text">Loading...</span>
+              </div>
+            )}
+            <button 
+              className="fetch-button"
+              onClick={fetchAnalyticsData}
+              disabled={isFetching}
+            >
+              {isFetching ? 'Fetching...' : 'Fetch Data'}
+            </button>
+          </div>
           <button 
             className="reset-button"
             onClick={() => setShowResetConfirm(true)}
