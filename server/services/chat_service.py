@@ -7,6 +7,8 @@ from datetime import datetime
 import pytz
 from helpers.token_utils import calculate_token_cost
 from services.analytics_service import store_request_analytics, store_openai_api_log
+from models.sql_models import OpenAIAPILog
+from database.session import ScopedSession
 
 # Initialize the OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -88,16 +90,15 @@ def process_chat(user_message, conversation_history, user_id=None):
             model=model,
             completion_tokens=token_usage.completion_tokens
         )
-        # Store analytics data with latency
-        store_request_analytics(token_usage, cost_info, latency_ms=latency_ms, model=model)
         assistant_response = message.content or ""
         assistant_message = {
             "role": "assistant",
             "content": assistant_response
         }
         conversation_history.append(assistant_message)
-        # Store OpenAI API log (success)
-        store_openai_api_log(
+
+        # Store OpenAI API log (success) and get log_id
+        log = OpenAIAPILog(
             user_id=user_id,
             request_prompt=user_message,
             request_payload=request_payload,
@@ -107,6 +108,13 @@ def process_chat(user_message, conversation_history, user_id=None):
             status="success",
             error_message=None
         )
+        ScopedSession.add(log)
+        ScopedSession.commit()
+        log_id = log.id
+
+        # Store analytics data with latency and log_id
+        store_request_analytics(token_usage, cost_info, latency_ms=latency_ms, model=model, log_id=log_id)
+
         return {
             "chat_response": assistant_response,
             "conversation_history": conversation_history,
@@ -121,7 +129,7 @@ def process_chat(user_message, conversation_history, user_id=None):
     except Exception as e:
         # Store OpenAI API log (error)
         end_time = datetime.utcnow()
-        store_openai_api_log(
+        log = OpenAIAPILog(
             user_id=user_id,
             request_prompt=user_message,
             request_payload=request_payload,
@@ -131,4 +139,13 @@ def process_chat(user_message, conversation_history, user_id=None):
             status="error",
             error_message=str(e)
         )
+        ScopedSession.add(log)
+        ScopedSession.commit()
+        log_id = log.id
+        # Store analytics data with error and log_id
+        store_request_analytics(token_usage if 'token_usage' in locals() else {'prompt_tokens':0,'completion_tokens':0,'total_tokens':0},
+                               cost_info if 'cost_info' in locals() else {'prompt_cost':0,'completion_cost':0,'total_cost':0},
+                               latency_ms=(int((end_time - start_time).total_seconds() * 1000)),
+                               model=model,
+                               log_id=log_id)
         return {"error": str(e)}, 500

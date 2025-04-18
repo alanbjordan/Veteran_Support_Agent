@@ -5,7 +5,7 @@
 
 import React from 'react';
 
-const AnalyticsTable = ({ requests }) => {
+const AnalyticsTable = ({ requests, onRowClick }) => {
   return (
     <div className="analytics-table">
       <div className="analytics-table-header">
@@ -28,9 +28,8 @@ const AnalyticsTable = ({ requests }) => {
           {requests.map((request, index) => {
             // Ensure cost is a number
             const cost = typeof request.cost === 'number' ? request.cost : 0;
-            
             return (
-              <tr key={index}>
+              <tr key={index} style={{ cursor: 'pointer' }} onClick={() => onRowClick && onRowClick(request)}>
                 <td>{request.date}</td>
                 <td>{request.model}</td>
                 <td>{request.sentTokens.toLocaleString()}</td>

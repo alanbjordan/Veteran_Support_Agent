@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, send_file
 from helpers.cors_helpers import pre_authorized_cors_preflight
 from services.analytics_service import store_request_analytics
 from helpers.analytics_helpers import get_analytics_summary
-from models.sql_models import AnalyticsData
+from models.sql_models import AnalyticsData, OpenAIAPILog
 from database.session import ScopedSession
 import csv
 import io
@@ -66,7 +66,6 @@ def reset_analytics():
     try:
         # Delete all records from the analytics_data and openai_api_logs tables
         ScopedSession.query(AnalyticsData).delete()
-        from models.sql_models import OpenAIAPILog
         ScopedSession.query(OpenAIAPILog).delete()
         ScopedSession.commit()
         
@@ -136,3 +135,28 @@ def download_report():
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
+@pre_authorized_cors_preflight
+@analytics_bp.route("/analytics/openai-log/<int:log_id>", methods=["GET"])
+def get_openai_log(log_id):
+    """Fetch the OpenAI API log for a given log_id."""
+    try:
+        log = ScopedSession.query(OpenAIAPILog).filter_by(id=log_id).first()
+        if not log:
+            return jsonify({"error": "OpenAI log not found"}), 404
+        # Serialize the log fields
+        log_data = {
+            "id": log.id,
+            "user_id": log.user_id,
+            "request_prompt": log.request_prompt,
+            "request_payload": log.request_payload,
+            "request_sent_at": log.request_sent_at.isoformat() if log.request_sent_at else None,
+            "response_json": log.response_json,
+            "response_received_at": log.response_received_at.isoformat() if log.response_received_at else None,
+            "status": log.status,
+            "error_message": log.error_message,
+        }
+        return jsonify(log_data), 200
+    except Exception as e:
+        print(f"Error fetching OpenAI log: {e}")
+        return jsonify({"error": "Internal server error"}), 500
