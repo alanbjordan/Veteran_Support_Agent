@@ -9,6 +9,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import AnalyticsSummary from './AnalyticsSummary';
 import AnalyticsTable from './AnalyticsTable';
 import AnalyticsRequestModal from './AnalyticsRequestModal';
+import AnalyticsLatencyModal from './AnalyticsLatencyModal';
 import apiClient from '../../utils/apiClient';
 import './Analytics.css';
 
@@ -27,6 +28,7 @@ const Analytics = () => {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [showLatencyModal, setShowLatencyModal] = useState(false);
   const lastDataRef = useRef(null);
 
   // Function to fetch analytics data
@@ -147,7 +149,10 @@ const Analytics = () => {
       )}
 
       <div className="analytics-content">
-        <AnalyticsSummary data={analyticsData} />
+        <AnalyticsSummary 
+          data={analyticsData} 
+          onLatencyClick={() => setShowLatencyModal(true)} 
+        />
         <AnalyticsTable 
           requests={analyticsData.requestsByDate} 
           onRowClick={setSelectedRequest}
@@ -157,6 +162,13 @@ const Analytics = () => {
         <AnalyticsRequestModal 
           request={selectedRequest} 
           onClose={() => setSelectedRequest(null)} 
+        />
+      )}
+      {showLatencyModal && (
+        <AnalyticsLatencyModal
+          open={showLatencyModal}
+          onClose={() => setShowLatencyModal(false)}
+          requests={analyticsData.requestsByDate}
         />
       )}
     </div>

@@ -519,3 +519,12 @@ body {
 .close-button:hover {
   color: var(--primary-dark);
 }
+
+.analytics-card-clickable {
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.analytics-card-clickable:hover {
+  box-shadow: 0 6px 18px var(--shadow-color);
+  transform: translateY(-7px) scale(1.03);
+}

@@ -7,11 +7,10 @@ import React from 'react';
 import AnalyticsCard from './AnalyticsCard';
 import { FaDollarSign, FaChartLine } from 'react-icons/fa';
 
-const AnalyticsSummary = ({ data }) => {
+const AnalyticsSummary = ({ data, onLatencyClick }) => {
   // Add null checks for all values
   const totalCost = data?.totalCost || 0;
   const averageCostPerRequest = data?.averageCostPerRequest || 0;
-  const totalRequests = data?.totalRequests || 0;
   const totalSentTokens = data?.totalSentTokens || 0;
   const totalReceivedTokens = data?.totalReceivedTokens || 0;
   const averageLatency = data?.averageLatency || 0;
@@ -35,9 +34,9 @@ const AnalyticsSummary = ({ data }) => {
           title="Avg Latency" 
           value={`${averageLatency.toFixed(0)}ms`}
           subtitle="Response Time"
+          onClick={onLatencyClick}
         />
       </div>
-
       {/* Bottom row - Token metrics */}
       <div className="analytics-row">
         <AnalyticsCard 
