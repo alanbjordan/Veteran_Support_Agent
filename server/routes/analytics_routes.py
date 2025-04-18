@@ -62,17 +62,19 @@ def get_summary():
 @pre_authorized_cors_preflight
 @analytics_bp.route("/analytics/reset", methods=["POST"])
 def reset_analytics():
-    """Reset all analytics data."""
+    """Reset all analytics data and OpenAI API logs."""
     try:
-        # Delete all records from the analytics_data table
+        # Delete all records from the analytics_data and openai_api_logs tables
         ScopedSession.query(AnalyticsData).delete()
+        from models.sql_models import OpenAIAPILog
+        ScopedSession.query(OpenAIAPILog).delete()
         ScopedSession.commit()
         
         # Get the updated analytics summary (should be empty)
         updated_analytics = get_analytics_summary()
         
         return jsonify({
-            "message": "Analytics data reset successfully",
+            "message": "Analytics data and OpenAI API logs reset successfully",
             "analytics": updated_analytics
         }), 200
     except Exception as e:
@@ -133,4 +135,4 @@ def download_report():
         print("DEBUG: Exception encountered in download report:", e)
         import traceback
         traceback.print_exc()
-        return jsonify({"error": str(e)}), 500 
+        return jsonify({"error": str(e)}), 500

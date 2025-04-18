@@ -27,6 +27,8 @@ def get_analytics_summary():
         
         # Format recent requests
         requests_by_date = [{
+            "id": req.id,  # Include analytics row id
+            "log_id": req.log_id,  # Include log_id for frontend use
             "date": req.date.strftime("%Y-%m-%d %H:%M:%S"),
             "model": req.model,
             "sentTokens": req.prompt_tokens,
@@ -66,4 +68,4 @@ def get_analytics_summary():
             "averageLatency": 0,
             "requestsByDate": [],
             "costByModel": {}
-        } 
+        }

@@ -35,6 +35,7 @@ class AnalyticsData(db.Model):
     total_cost = db.Column(db.Numeric(10, 7), nullable=False)
     latency_ms = db.Column(db.Integer, nullable=False)  # Latency in milliseconds
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    log_id = db.Column(db.Integer, db.ForeignKey('openai_api_logs.id'), nullable=True)
 
     def __repr__(self):
         return f"<AnalyticsData {self.date} - {self.model}>"
