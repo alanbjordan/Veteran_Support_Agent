@@ -11,8 +11,6 @@ import os
 
 # Import the register_routes function
 from routes.all_routes import register_routes
-# Remove SocketIO imports
-# from services.websocket_service import init_socketio, socketio
 
 # Create the application instance
 app = create_app()

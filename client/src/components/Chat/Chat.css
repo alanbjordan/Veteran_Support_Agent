@@ -18,7 +18,8 @@
     --typing-indicator-color: #4a5568;
     --input-border: #e2e8f0;
     --shadow-color: rgba(0, 0, 0, 0.1);
-    --header-height: 60px;
+    --header-height: 72px; /* Increased header height for better button layout */
+    --header-padding: 0 24px; /* More horizontal padding */
 }
 
 .chat-container {
@@ -47,7 +48,7 @@
 
 .chat-header {
     height: var(--header-height);
-    padding: 0 var(--spacing);
+    padding: var(--header-padding);
     background: var(--primary-color);
     color: var(--secondary-color);
     text-align: center;
@@ -55,6 +56,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    min-height: 64px;
 }
 
 .chat-header h2 {
@@ -66,7 +68,7 @@
 
 .header-buttons {
     display: flex;
-    gap: 1rem;
+    gap: 1.25rem; /* Increased gap for better spacing */
     align-items: center;
 }
 
@@ -75,12 +77,13 @@
     background-color: var(--secondary-color);
     color: var(--primary-color);
     border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
+    padding: 0.65rem 1.25rem; /* Larger padding for a more standard button size */
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 1rem;
     transition: background-color 0.2s ease;
     font-weight: 600;
+    min-width: 120px;
 }
 
 .analytics-button:hover,
@@ -456,4 +459,3 @@
   width: 16px;
   height: 16px;
 }
-  

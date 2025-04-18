@@ -8,6 +8,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AnalyticsSummary from './AnalyticsSummary';
 import AnalyticsTable from './AnalyticsTable';
+import AnalyticsRequestModal from './AnalyticsRequestModal';
 import apiClient from '../../utils/apiClient';
 import './Analytics.css';
 
@@ -25,6 +26,7 @@ const Analytics = () => {
   const [error, setError] = useState(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
   const lastDataRef = useRef(null);
 
   // Function to fetch analytics data
@@ -35,6 +37,7 @@ const Analytics = () => {
       await new Promise(resolve => setTimeout(resolve, 1000));
       const response = await apiClient.get('/analytics/summary');
       const newData = response.data;
+      console.log('Fetched analytics data:', newData);
       setAnalyticsData(newData);
       lastDataRef.current = newData;
       setError(null);
@@ -145,8 +148,17 @@ const Analytics = () => {
 
       <div className="analytics-content">
         <AnalyticsSummary data={analyticsData} />
-        <AnalyticsTable requests={analyticsData.requestsByDate} />
+        <AnalyticsTable 
+          requests={analyticsData.requestsByDate} 
+          onRowClick={setSelectedRequest}
+        />
       </div>
+      {selectedRequest && (
+        <AnalyticsRequestModal 
+          request={selectedRequest} 
+          onClose={() => setSelectedRequest(null)} 
+        />
+      )}
     </div>
   );
 };
