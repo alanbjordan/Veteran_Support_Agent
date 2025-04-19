@@ -75,10 +75,4 @@ def tool_call_result():
 @chat_bp.route("/chat-check", methods=["GET"])
 def chat_check():
     """Check the chat service status."""
-    # Get chat request
-    data = request.get_json(force=True)
-    print("DEBUG: Received chat check request JSON:", data)
-    if not data:
-        return jsonify({"error": "Missing JSON body"}), 400
-    
     return jsonify({"status": "Chat service is running"}), 200

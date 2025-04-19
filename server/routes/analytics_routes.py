@@ -175,10 +175,4 @@ def download_report():
 @analytics_bp.route("/analytics-check", methods=["GET"])
 def analytics_check():
     """Check the analytics service status."""
-    # Get analytics request
-    data = request.get_json(force=True)
-    print("DEBUG: Received analytics check request JSON:", data)
-    if not data:
-        return jsonify({"error": "Missing JSON body"}), 400
-    
     return jsonify({"status": "Analytics service is running"}), 200

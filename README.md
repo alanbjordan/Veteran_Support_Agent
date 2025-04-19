@@ -2,16 +2,16 @@
 
 A comprehensive AI-powered application designed to assist veterans with their claims process. This application provides a chat interface for veterans to interact with an AI assistant and includes an analytics dashboard to track usage and performance metrics.
 
-## 🚀 Features
+## Features
 
-### 🤖 AI-Powered Chat Interface
+### AI-Powered Chat Interface
 - Real-time chat with AI assistant
 - Markdown support for formatted responses
 - Typing indicators
 - Message timestamps
 - Conversation history
 
-### 📊 Analytics Dashboard
+### Analytics Dashboard
 - Real-time cost tracking
 - Token usage monitoring
 - Request history
@@ -19,7 +19,7 @@ A comprehensive AI-powered application designed to assist veterans with their cl
 - CSV report generation
 - Data reset capabilities
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Frontend
 - React.js (v19)
@@ -38,7 +38,7 @@ A comprehensive AI-powered application designed to assist veterans with their cl
 - SQLAlchemy ORM
 - Gunicorn for production deployment
 
-## 📋 Prerequisites
+## Prerequisites
 
 - Node.js (v14 or higher)
 - Python 3.8 or higher
@@ -46,54 +46,66 @@ A comprehensive AI-powered application designed to assist veterans with their cl
 - PostgreSQL database
 - Docker (optional, for local development)
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Installation
 
 1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd Veteran_Claims_Agent
+   ```
+
+2. Copy and configure environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+   Then update `.env` with your settings:
+   ```properties
+   OPENAI_API_KEY=your_api_key
+   POSTGRES_USER=admin
+   POSTGRES_PASSWORD=your_password
+   POSTGRES_HOST=your_db
+   POSTGRES_PORT=5432
+   POSTGRES_DB=your_db
+   CORS_ORIGINS=http://localhost:8080
+   REACT_APP_API_URL=http://localhost:5000/api
+   ```
+
+3. (Optional) Install local dependencies:
+   ```bash
+   cd client && npm install
+   cd ../server && pip install -r requirements.txt
+   ```
+
+### Running with Docker
+
+Build and start all services:
 ```bash
-git clone [repository-url]
-cd Veteran_Claims_Agent
+docker-compose up --build
 ```
 
-2. Install frontend dependencies:
-```bash
-cd client
-npm install
-```
+- Frontend: http://localhost:8080
+- Backend API: http://localhost:5000/api
 
-3. Install backend dependencies:
-```bash
-cd server
-pip install -r requirements.txt
-```
+### Running Locally Without Docker
 
-4. Set up environment variables:
-Create a `.env` file in the server directory with:
-```
-OPENAI_API_KEY=your_api_key_here
-DATABASE_URL=postgresql://username:password@localhost:5432/dbname
-SECRET_KEY=your_secret_key_here
-CORS_ORIGINS=http://localhost:3000
-```
+1. Ensure PostgreSQL is running locally and the `agents` database exists.
+2. Create tables from your models:
+   ```bash
+   cd server
+   python -c "from create_app import create_app; from database import db; app = create_app(); with app.app_context(): db.create_all()"
+   ```
+3. Start backend:
+   ```bash
+   flask run
+   ```
+4. Start frontend:
+   ```bash
+   cd client && npm start
+   ```
 
-### Running the Application
-
-1. Start the backend server:
-```bash
-cd server
-python app.py
-```
-
-2. Start the frontend development server:
-```bash
-cd client
-npm start
-```
-
-The application will be available at `http://localhost:3000`
-
-## 🗂️ Project Structure
+## Project Structure
 
 ```
 ├── client/                  # Frontend React application
@@ -117,7 +129,7 @@ The application will be available at `http://localhost:3000`
     └── requirements.txt     # Python dependencies
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Database Setup
 
@@ -152,11 +164,11 @@ If the frontend can't connect to the backend:
 2. Verify the CORS settings in the backend
 3. Check the network tab in your browser's developer tools
 
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - OpenAI for their API
 - React.js community
