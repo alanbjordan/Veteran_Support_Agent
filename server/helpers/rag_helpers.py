@@ -1,68 +1,69 @@
-# server/helpers/llm_utils.py
-# Functions Tools to interact with the OpenAI API
+# server/helpers/rag_helpers.py
 
-from database import db
-from models.sql_models import MyTable
-from openai import OpenAI
+# Import necessary libraries
 import os
 import json
+import decimal
 import requests
 from flask import g
+from database import db
 from openai import OpenAI
 from pinecone import Pinecone
-import decimal
-from helpers.llm_wrappers import call_openai_chat_create, call_openai_embeddings
+from models.sql_models import MyTable
 
 ###############################################################################
 # 1. ENV & GLOBAL SETUP
 ###############################################################################
 
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-PINECONE_ENV = "us-east-1"  # or whichever region you use
+PINECONE_ENV = "us-east-1"
 
 INDEX_NAME_CFR = "38-cfr-index"
 INDEX_NAME_M21 = "m21-index"
 
-# Two different embedding models:
+# Embedding model:
 # - The "small" one for Pinecone (1536 dims)
-# - The "large" one for Postgres pgvector (3072 dims)
 EMBEDDING_MODEL_SMALL = "text-embedding-3-small"
-EMBEDDING_MODEL_LARGE = "text-embedding-3-large"
 
 # Initialize the OpenAI client
 client = OpenAI()
-model="o1-2024-12-17"
+
 # Initialize Pinecone
 pc = Pinecone(api_key=PINECONE_API_KEY)
+# Initialize the Pinecone indexes
 index_cfr = pc.Index(INDEX_NAME_CFR)
 index_m21 = pc.Index(INDEX_NAME_M21)
 
-PART_3_URL = "/home/jsnow/ML-project/Agent_testing/Veteran_Claims_Agent/server/json/part_3_flattened.json"
-PART_4_URL = "/home/jsnow/ML-project/Agent_testing/Veteran_Claims_Agent/server/json/part_4_flattened.json"
-M21_1_URL = "/home/jsnow/ML-project/Agent_testing/Veteran_Claims_Agent/server/json/m21_1_chunked3k.json"
-M21_5_URL = "/home/jsnow/ML-project/Agent_testing/Veteran_Claims_Agent/server/json/m21_5_chunked3k.json"
+# Load the JSON files
+PART_3_URL = "./server/json/part_3_flattened.json"
+PART_4_URL = "./server/json/part_4_flattened.json"
+M21_1_URL = "./server/json/m21_1_chunked3k.json"
+M21_5_URL = "./server/json/m21_5_chunked3k.json"
 
 ###############################################################################
 # 2. QUERY CLEANUP
 ###############################################################################
-def clean_up_query_with_llm(user_query: str) -> str:
+
+# Function to transform the user query
+def transform_query(user_query: str) -> str:
     """
-    Uses an OpenAI LLM to rewrite the user query in a more standardized,
-    formal, or clarified way—removing slang, expanding contractions, etc.
-    Now directly calls the OpenAI API without any wrappers.
+    Uses an OpenAI LLM to rewrite the user query into a formal, structured inquiry that is 
+    optimized for semantic search on 38 CFR or the M21 Manual of VA Regulations. The LLM will 
+    expand contractions, fix grammatical errors, remove irrelevant sentences, and create a query 
+    suitable for text embeddings.
     """
     system_message = (
         """
         # Identity
-        *You are a helpful assistant that rewrites user queries for better text embeddings. 
+        You are a helpful assistant skilled at transforming user queries into clear, formal statements.
 
         # Instructions
-        * Expand or remove contractions, fix grammatical errors, and keep the original meaning. 
-        * Be concise and ensure the question is still natural and complete. You will rewrite it 
-        professionally as if talking directly to a VA rater who could answer the question. 
-        * Remove sentences not relevant to the question.
+        Given the user's query, rewrite it to formulate a precise, professional statement optimized 
+        for semantic search across regulatory texts such as 38 CFR and the M21 Manual of VA Regulations. 
+        Expand contractions, correct any grammatical errors, and remove any extraneous or unrelated 
+        content. The final inquiry should be succinct, clear, and maintain the original intent while 
+        aligning with legal and regulatory terminology.
         """
-        
     )
 
     # Create messages for the API call
@@ -73,70 +74,61 @@ def clean_up_query_with_llm(user_query: str) -> str:
 
     # Directly call the OpenAI API
     completion = client.chat.completions.create(
-        model="gpt-4.1-nano-2025-04-14",  # Use the same model as in chat_service.py
+        model="gpt-4o",
         messages=messages,
-        max_completion_tokens=750
+        max_completion_tokens=750,
+        temperature=0.0
     )
     
     # Extract the cleaned query from the response
     cleaned_query = completion.choices[0].message.content
     return cleaned_query.strip()
 
-
-
 ###############################################################################
 # 3. EMBEDDING FUNCTIONS
 ###############################################################################
-def get_embedding_small(user_id: int, text: str) -> list:
-    # $0.020 per 1M => 0.00000002 per token
-    cost_rate = decimal.Decimal("0.00000002")
-    response = call_openai_embeddings(
-        user_id=user_id,
-        input_text=text,
-        model="text-embedding-3-small",
-        cost_per_token=cost_rate
-    )
-    return response.data[0].embedding
 
-def get_embedding_large(user_id: int, text: str) -> list:
-    # $0.130 per 1M => 0.00000013 per token
-    cost_rate = decimal.Decimal("0.00000013")
-    response = call_openai_embeddings(
-        user_id=user_id,
-        input_text=text,
-        model="text-embedding-3-large",
-        cost_per_token=cost_rate
-    )
+# Function to get the embedding for a given text
+def get_embedding_small(model, text: str) -> list:
+
+    """
+    Fetches the embedding for the given text using a smaller model or large model.
+    """
+    response = client.embeddings.create(
+        input=text,
+        model=model
+        )
     return response.data[0].embedding
 
 ###############################################################################
 # 4. MULTITHREADED SECTION RETRIEVAL FOR CFR / M21
 ###############################################################################
-def fetch_matches_content(search_results, max_workers=3) -> list:
+
+# Function to fetch matched content from Pinecone for 38 CFR
+def fetch_matches_content(search_results) -> list:
     """
-    Fetch section text for all Pinecone matches (38 CFR) from remote JSON files on the server'.
+    Fetch section text for all Pinecone matches (38 CFR) from local JSON files.
     """
     matches = search_results.get("matches", [])
 
     def get_section_text(section_number: str, part_number: str) -> str:
-        # 1) Decide which URL to request
+        # Determine which local file to load based on the part number
         if part_number == "3":
-            url = PART_3_URL
+            file_path = PART_3_URL
         elif part_number == "4":
-            url = PART_4_URL
+            file_path = PART_4_URL
         else:
             return None
-
-        # 2) Fetch and parse the JSON data from Azure
+        
+        # Open and load JSON data from the local file
         try:
-            resp = requests.get(url)
-            resp.raise_for_status()  # will raise an exception if 4xx/5xx
-            data = resp.json()
+            with open(file_path, 'r') as f:
+                data = json.load(f)
         except Exception as e:
-            print(f"[ERROR] Unable to fetch or parse JSON from {url}: {e}")
+            print(f"[ERROR] Unable to open or parse JSON from {file_path}: {e}")
             return None
 
-        # 3) Search for the matching section_number
+        # Search for the matching section_number in the JSON data
         for item in data:
             meta = item.get("metadata", {})
             if meta.get("section_number") == section_number:
@@ -151,7 +143,6 @@ def fetch_matches_content(search_results, max_workers=3) -> list:
         if not section_num or not part_number:
             continue
 
-        # fetch the matching text from Azure
         section_text = get_section_text(section_num, part_number)
         matching_texts.append({
             "section_number": section_num,
@@ -160,8 +151,8 @@ def fetch_matches_content(search_results, max_workers=3) -> list:
 
     return matching_texts
 
-
-def fetch_matches_content_m21(search_results, max_workers=3) -> list:
+# Function to fetch matched content from Pinecone for M21
+def fetch_matches_content_m21(search_results) -> list:
     """
     Fetch article text for all Pinecone matches (M21) from remote JSON files in the server.
     Returns a list of dicts with 'article_number' and 'matching_text'.
@@ -171,19 +162,18 @@ def fetch_matches_content_m21(search_results, max_workers=3) -> list:
     def get_article_text(article_number: str, manual: str) -> str:
         # Determine which URL to download based on manual
         if manual == "M21-1":
-            url = M21_1_URL
+            file_path = M21_1_URL
         elif manual == "M21-5":
-            url = M21_5_URL
+            file_path = M21_5_URL
         else:
             return None
 
-        # Fetch and parse the JSON data from Azure
+        # Open and load JSON data from the local file
         try:
-            resp = requests.get(url)
-            resp.raise_for_status()
-            data = resp.json()
+            with open(file_path, 'r') as f:
+                data = json.load(f)
         except Exception as e:
-            print(f"[ERROR] Unable to fetch or parse JSON from {url}: {e}")
+            print(f"[ERROR] Unable to open or parse JSON from {file_path}: {e}")
             return None
 
         # Search for the matching article_number
@@ -209,21 +199,23 @@ def fetch_matches_content_m21(search_results, max_workers=3) -> list:
 
     return matching_texts
 
+###############################################################################
+# 5. PINECONE SEARCH FUNCTIONS (CFR and M21)
+###############################################################################
 
-###############################################################################
-# 5. PINECONE SEARCH FUNCTIONS (CFR and M21) - using the SMALL model
-###############################################################################
-def search_cfr_documents(user_id, query: str, top_k: int = 3) -> str:
-    cleaned_query = clean_up_query_with_llm(user_id, query)
-    query_emb = get_embedding_small(user_id, cleaned_query)
+# Function to search for documents in the CFR indexes
+def search_cfr_documents(embedding: str, top_k: int = 3) -> str:
+    #cleaned_query = transform_query(query)
+    #query_emb = get_embedding_small(cleaned_query)
 
     results = index_cfr.query(
-        vector=query_emb,
+        #vector=query_emb,
+        vector=embedding,
         top_k=top_k,
         include_metadata=True
     )
 
-    matching_sections = fetch_matches_content(results, max_workers=3)
+    matching_sections = fetch_matches_content(results)
     if not matching_sections:
         return "No sections found (CFR)."
 
@@ -236,17 +228,17 @@ def search_cfr_documents(user_id, query: str, top_k: int = 3) -> str:
 
     return references_str.strip()
 
-
-def search_m21_documents(user_id, query: str, top_k: int = 3) -> str:
-    cleaned_query = clean_up_query_with_llm(user_id, query)
-    query_emb = get_embedding_small(user_id, cleaned_query)
+# Function to search for documents in the M21 indexes
+def search_m21_documents(query: str, top_k: int = 3) -> str:
+    cleaned_query = transform_query(query)
+    query_emb = get_embedding_small(cleaned_query)
 
     results = index_m21.query(
         vector=query_emb,
         top_k=top_k,
         include_metadata=True
     )
-    matching_articles = fetch_matches_content_m21(results, max_workers=3)
+    matching_articles = fetch_matches_content_m21(results)
     if not matching_articles:
         return "No articles found (M21)."
 
@@ -257,16 +249,3 @@ def search_m21_documents(user_id, query: str, top_k: int = 3) -> str:
         references_str += f"\n---\nArticle {article_num}:\n{text_snippet}\n"
     print(references_str)
     return references_str.strip()
-
-
-
-def fetch_something(filter_params: dict) -> list:
-    """
-    Query the table
-        }
-    :return: query object
-    """
-    query = db.session.query(MyTable)
-    
-    
-    return query
