@@ -94,7 +94,8 @@ def get_system_message():
         "role": "system",
         "content": (
             """ 
-            You are a helpful assistant.
+            # Identity
+            
             """
         )
     }
@@ -134,45 +135,115 @@ def process_chat(user_message, conversation_history, user_id=None):
     Returns:
         tuple: (response dict, HTTP status code)
     """
+    print("[DEBUG] Starting process_chat function")
     if not user_message:
+        print("[DEBUG] No user message provided")
         return {"error": "No 'message' provided"}, 400
+
     # Ensure conversation_history is a list
     if not isinstance(conversation_history, list):
+        print("[DEBUG] conversation_history is not a list, initializing as an empty list")
         conversation_history = []
+
     # Check if the conversation history already has a system message
     has_system_message = any(
         msg.get("role") == "system" and "You are a helpful assistant" in msg.get("content", "")
         for msg in conversation_history
     )
+    print(f"[DEBUG] System message present: {has_system_message}")
+
     # If no conversation history or no system message, add the system message
     if not conversation_history or not has_system_message:
+        print("[DEBUG] Adding system message to conversation history")
         conversation_history.insert(0, get_system_message())
+
     # Check if there's a time context message in the conversation history
     has_time_context = any(
         msg.get("role") == "system" and "Current time:" in msg.get("content", "")
         for msg in conversation_history
     )
+    print(f"[DEBUG] Time context message present: {has_time_context}")
+
     # If no time context message, add one
     if not has_time_context:
+        print("[DEBUG] Adding time context message to conversation history")
         conversation_history.append(get_time_context_message())
+
     # Record start time for latency tracking
     start_time = datetime.utcnow()
+    print("[DEBUG] Start time recorded")
+
+    # Add tools to the request payload
     request_payload = {
         "model": model,
         "messages": conversation_history,
-        "max_completion_tokens": 750
+        "max_completion_tokens": 750,
+        "functions": tools
     }
+    print(f"[DEBUG] Request payload prepared: {request_payload}")
+
     try:
         # Call the OpenAI ChatCompletion API to get the assistant's response
+        print("[DEBUG] Calling OpenAI ChatCompletion API")
         completion = client.chat.completions.create(
             model=model,
             messages=conversation_history,
-            max_completion_tokens=750
+            max_completion_tokens=750,
+            functions=tools
         )
+        print("[DEBUG] OpenAI API call successful")
+
         # Calculate latency in milliseconds
         end_time = datetime.utcnow()
         latency_ms = int((end_time - start_time).total_seconds() * 1000)
+        print(f"[DEBUG] Latency calculated: {latency_ms} ms")
+
         message = completion.choices[0].message
+        assistant_response = message.content or ""
+        print(f"[DEBUG] Assistant response: {assistant_response}")
+
+        # Fix: Use attribute access instead of .get for ChatCompletionMessage
+        if hasattr(message, "function_call") and message.function_call is not None:
+            print("[DEBUG] Function call detected in response")
+            function_call = message.function_call
+            function_name = function_call.name
+            function_args = json.loads(function_call.arguments)
+            print(f"[DEBUG] Function call details: name={function_name}, arguments={function_args}")
+
+            # Execute the appropriate tool function
+            tool_result = None
+            if function_name == "cfr_search":
+                print("[DEBUG] Executing cfr_search tool")
+                tool_result = search_cfr_documents(**function_args)
+            elif function_name == "m21_search":
+                print("[DEBUG] Executing m21_search tool")
+                tool_result = search_m21_documents(**function_args)
+
+            print(f"[DEBUG] Tool result: {tool_result}")
+
+            # Append the tool result to the conversation history
+            conversation_history.append({
+                "role": "function",
+                "name": function_name,
+                "content": tool_result
+            })
+
+            # Re-call the API with the updated conversation history
+            print("[DEBUG] Re-calling OpenAI API with updated conversation history")
+            completion = client.chat.completions.create(
+                model=model,
+                messages=conversation_history,
+                max_completion_tokens=750
+            )
+            assistant_response = completion.choices[0].message.content or ""
+
+        # Append the assistant's response to the conversation history
+        assistant_message = {
+            "role": "assistant",
+            "content": assistant_response
+        }
+        conversation_history.append(assistant_message)
+
         # Calculate token usage and cost
         token_usage = completion.usage
         cost_info = calculate_token_cost(
@@ -180,12 +251,7 @@ def process_chat(user_message, conversation_history, user_id=None):
             model=model,
             completion_tokens=token_usage.completion_tokens
         )
-        assistant_response = message.content or ""
-        assistant_message = {
-            "role": "assistant",
-            "content": assistant_response
-        }
-        conversation_history.append(assistant_message)
+        print(f"[DEBUG] Token usage: {token_usage}, Cost info: {cost_info}")
 
         # Store OpenAI API log (success) and get log_id
         log = OpenAIAPILog(
@@ -201,6 +267,7 @@ def process_chat(user_message, conversation_history, user_id=None):
         ScopedSession.add(log)
         ScopedSession.commit()
         log_id = log.id
+        print(f"[DEBUG] OpenAI API log stored with log_id: {log_id}")
 
         # Store analytics data with latency and log_id
         store_request_analytics(token_usage, cost_info, latency_ms=latency_ms, model=model, log_id=log_id)
@@ -216,7 +283,9 @@ def process_chat(user_message, conversation_history, user_id=None):
             "cost": cost_info,
             "latency_ms": latency_ms
         }, 200
+
     except Exception as e:
+        print(f"[ERROR] Exception occurred: {e}")
         # Store OpenAI API log (error)
         end_time = datetime.utcnow()
         log = OpenAIAPILog(
@@ -232,12 +301,15 @@ def process_chat(user_message, conversation_history, user_id=None):
         ScopedSession.add(log)
         ScopedSession.commit()
         log_id = log.id
+        print(f"[DEBUG] Error log stored with log_id: {log_id}")
+
         # Store analytics data with error and log_id
         store_request_analytics(
-            token_usage if 'token_usage' in locals() else {'prompt_tokens':0,'completion_tokens':0,'total_tokens':0},
-            cost_info if 'cost_info' in locals() else {'prompt_cost':0,'completion_cost':0,'total_cost':0},
+            token_usage if 'token_usage' in locals() else {'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0},
+            cost_info if 'cost_info' in locals() else {'prompt_cost': 0, 'completion_cost': 0, 'total_cost': 0},
             latency_ms=(int((end_time - start_time).total_seconds() * 1000)),
             model=model,
             log_id=log_id
         )
+
         return {"error": str(e)}, 500

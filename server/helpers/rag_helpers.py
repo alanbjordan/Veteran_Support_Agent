@@ -9,7 +9,6 @@ from flask import g
 from database import db
 from openai import OpenAI
 from pinecone import Pinecone
-from models.sql_models import MyTable
 
 ###############################################################################
 # 1. ENV & GLOBAL SETUP
@@ -206,7 +205,7 @@ def fetch_matches_content_m21(search_results) -> list:
 # Function to search for documents in the CFR indexes
 def search_cfr_documents(query: str, top_k: int = 3) -> str:
     cleaned_query = transform_query(query)
-    query_emb = get_embedding_small(cleaned_query)
+    query_emb = get_embedding_small(EMBEDDING_MODEL_SMALL,cleaned_query)
 
     results = index_cfr.query(
         vector=query_emb,
@@ -230,7 +229,7 @@ def search_cfr_documents(query: str, top_k: int = 3) -> str:
 # Function to search for documents in the M21 indexes
 def search_m21_documents(query: str, top_k: int = 3) -> str:
     cleaned_query = transform_query(query)
-    query_emb = get_embedding_small(cleaned_query)
+    query_emb = get_embedding_small(EMBEDDING_MODEL_SMALL,cleaned_query)
 
     results = index_m21.query(
         vector=query_emb,
