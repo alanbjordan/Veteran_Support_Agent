@@ -1,3 +1,4 @@
 /studentsuccess
 /__pycache__/
 *.pyc
+.env/ 
