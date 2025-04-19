@@ -9,7 +9,6 @@ from flask import g
 from database import db
 from openai import OpenAI
 from pinecone import Pinecone
-from models.sql_models import MyTable
 
 ###############################################################################
 # 1. ENV & GLOBAL SETUP
@@ -204,13 +203,12 @@ def fetch_matches_content_m21(search_results) -> list:
 ###############################################################################
 
 # Function to search for documents in the CFR indexes
-def search_cfr_documents(embedding: str, top_k: int = 3) -> str:
-    #cleaned_query = transform_query(query)
-    #query_emb = get_embedding_small(cleaned_query)
+def search_cfr_documents(query: str, top_k: int = 3) -> str:
+    cleaned_query = transform_query(query)
+    query_emb = get_embedding_small(EMBEDDING_MODEL_SMALL,cleaned_query)
 
     results = index_cfr.query(
-        #vector=query_emb,
-        vector=embedding,
+        vector=query_emb,
         top_k=top_k,
         include_metadata=True
     )
@@ -231,7 +229,7 @@ def search_cfr_documents(embedding: str, top_k: int = 3) -> str:
 # Function to search for documents in the M21 indexes
 def search_m21_documents(query: str, top_k: int = 3) -> str:
     cleaned_query = transform_query(query)
-    query_emb = get_embedding_small(cleaned_query)
+    query_emb = get_embedding_small(EMBEDDING_MODEL_SMALL,cleaned_query)
 
     results = index_m21.query(
         vector=query_emb,
@@ -249,3 +247,19 @@ def search_m21_documents(query: str, top_k: int = 3) -> str:
         references_str += f"\n---\nArticle {article_num}:\n{text_snippet}\n"
     print(references_str)
     return references_str.strip()
+
+def calculator_tool(expression: str) -> str:
+    """
+    Safely evaluate a basic math expression and return the result as a string.
+    Only supports numbers and +, -, *, /, parentheses.
+    """
+    import re
+    allowed = re.compile(r'^[\d\s\+\-\*/\(\)\.]+$')
+    if not allowed.match(expression):
+        return "Invalid expression. Only numbers and +, -, *, /, parentheses are allowed."
+    try:
+        result = eval(expression, {"__builtins__": None}, {})
+        return str(result)
+    except Exception as e:
+        return f"Error evaluating expression: {e}"
+

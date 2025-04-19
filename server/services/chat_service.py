@@ -1,88 +1,288 @@
 # server/services/chat_service.py
 
-import os
-import json
-from openai import OpenAI
-from datetime import datetime
-import pytz
-from helpers.token_utils import calculate_token_cost
-from services.analytics_service import store_request_analytics, store_openai_api_log
-from models.sql_models import OpenAIAPILog
-from database.session import ScopedSession
+"""
+Chat Service Module
+-------------------
+This module provides the core logic for handling chat interactions with the OpenAI API, including:
+- Preparing system and time context messages
+- Managing conversation history
+- Calling the OpenAI ChatCompletion API
+- Logging API requests and responses
+- Calculating token usage and cost
+- Storing analytics and error logs
 
-# Initialize the OpenAI client
+Functions:
+    get_system_message(): Returns the default system prompt for the assistant.
+    get_time_context_message(): Returns a system message with the current EST time.
+    process_chat(user_message, conversation_history, user_id=None):
+        Handles a user chat message, manages conversation state, calls the LLM, logs analytics, and returns the response.
+"""
+
+# Standard library imports
+import os  # For environment variable access
+import json  # For JSON serialization
+from datetime import datetime  # For timestamping
+import pytz  # For timezone handling
+
+# Third-party imports
+from openai import OpenAI  # OpenAI API client
+
+# Internal module imports
+from helpers.token_utils import calculate_token_cost  # Token cost calculation utility
+from services.analytics_service import store_request_analytics, store_openai_api_log  
+from models.sql_models import OpenAIAPILog  # Database model for API logs
+from database.session import ScopedSession  # Database session management
+from helpers.rag_helpers import search_cfr_documents, search_m21_documents, calculator_tool
+
+# Initialize the OpenAI client with the API key from environment variables
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# This is the model that we are using for the chat service
-model="gpt-4.1-nano-2025-04-14"
+# The model used for chat completions
+model = "gpt-4.1-mini-2025-04-14"
+
+# Define the tools available to the assistant
+tools = [
+    {
+        "type": "function",
+        "name": "cfr_search",
+        "description": (
+            "Search 38 CFR regulations. "
+            "Transforms the user query, generates embeddings, and retrieves relevant CFR sections "
+            "using a Pinecone search."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "The user query for searching 38 CFR regulations."
+                }
+            },
+            "required": ["query"],
+            "additionalProperties": False
+        }
+    },
+    {
+        "type": "function",
+        "name": "m21_search",
+        "description": (
+            "Search the M21 Manual of VA Regulations. "
+            "Transforms the user query, generates embeddings, and retrieves relevant articles "
+            "using a Pinecone search."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "The user query for searching the M21 Manual."
+                }
+            },
+            "required": ["query"],
+            "additionalProperties": False
+        }
+    },
+    {
+        "type": "function",
+        "name": "calculator",
+        "description": (
+            "Evaluate a basic math expression. Supports numbers and +, -, *, /, parentheses. "
+            "Returns the result as a string."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "expression": {
+                    "type": "string",
+                    "description": "A valid math expression, e.g. '2 + 2 * (3 - 1)'"
+                }
+            },
+            "required": ["expression"],
+            "additionalProperties": False
+        }
+    }
+]
+
 
 def get_system_message():
-    """Return the system message for the chat."""
+    """
+    Return the system message for the chat assistant.
+    This message sets the assistant's behavior/personality for the conversation.
+    """
     return {
         "role": "system",
         "content": (
             """ 
-            You are a helpful assistant.
+            # Identity
+            You are a Department of Veterans Affairs (VA) employee and a helpful assistant skilled at answering questions about VA regulations,
+            including 38 CFR and the M21 Manual of VA Regulations. You are knowledgeable about VA policies, procedures, and benefits.
+            You are also familiar with the VA's mission and values, and you strive to provide accurate and helpful information to veterans and their families.
+            # Instructions
+            If you do not have the answer to a question, you have tools available to you to search the 38 CFR and M21 Manual of VA Regulations.
+            The final inquiry should be succinct, clear, and maintain the original intent while
+            aligning with legal and regulatory terminology.
+            # Note
+            You are not a legal expert, and your responses should not be considered legal advice.
+            If the user requires legal advice, you should recommend that they consult with a qualified attorney or legal expert.
+            # Tone
+            Your tone should be formal, respectful, and professional. You should avoid using slang or informal language.
+            You should also avoid using jargon or technical terms that the user may not understand.
+            If you need to use technical terms, you should explain them clearly and concisely
+            You should be patient and empathetic, and you should strive to provide clear and helpful answers to their questions.
+
             """
         )
     }
 
+
 def get_time_context_message():
-    """Get the current time in EST and return a time context message."""
+    """
+    Get the current time in EST and return a time context message for the chat.
+    This message provides the assistant with the current time context in the conversation.
+    """
     try:
-        # Get current time in EST using a reliable method
+        # Get current time in EST using pytz
         est = pytz.timezone('US/Eastern')
         current_time = datetime.now(est)
         current_time_formatted = current_time.strftime('%Y-%m-%d %H:%M:%S EST')
     except Exception as e:
-        # Fallback to a simpler approach
+        # Fallback to manual calculation if pytz fails
         from datetime import datetime, timedelta
-        # EST is UTC-5
         utc_now = datetime.utcnow()
         est_offset = timedelta(hours=-5)
         est_time = utc_now + est_offset
         current_time_formatted = est_time.strftime('%Y-%m-%d %H:%M:%S EST')
-    
     return {
         "role": "system",
         "content": f"Current time: {current_time_formatted}"
     }
 
+
 def process_chat(user_message, conversation_history, user_id=None):
-    """Process a chat message and return the response."""
+    """
+    Process a chat message and return the assistant's response.
+    Handles conversation history, system/time context, OpenAI API call, logging, and analytics.
+    Args:
+        user_message (str): The user's message to the assistant.
+        conversation_history (list): The list of previous messages in the conversation.
+        user_id (optional): The ID of the user (for logging/analytics).
+    Returns:
+        tuple: (response dict, HTTP status code)
+    """
+    print("[DEBUG] Starting process_chat function")
     if not user_message:
+        print("[DEBUG] No user message provided")
         return {"error": "No 'message' provided"}, 400
+
     # Ensure conversation_history is a list
     if not isinstance(conversation_history, list):
+        print("[DEBUG] conversation_history is not a list, initializing as an empty list")
         conversation_history = []
+
     # Check if the conversation history already has a system message
-    has_system_message = any(msg.get("role") == "system" and "You are a helpful assistant" in msg.get("content", "") for msg in conversation_history)
+    has_system_message = any(
+        msg.get("role") == "system" and "You are a helpful assistant" in msg.get("content", "")
+        for msg in conversation_history
+    )
+    print(f"[DEBUG] System message present: {has_system_message}")
+
     # If no conversation history or no system message, add the system message
     if not conversation_history or not has_system_message:
+        print("[DEBUG] Adding system message to conversation history")
         conversation_history.insert(0, get_system_message())
+
     # Check if there's a time context message in the conversation history
-    has_time_context = any(msg.get("role") == "system" and "Current time:" in msg.get("content", "") for msg in conversation_history)
+    has_time_context = any(
+        msg.get("role") == "system" and "Current time:" in msg.get("content", "")
+        for msg in conversation_history
+    )
+    print(f"[DEBUG] Time context message present: {has_time_context}")
+
     # If no time context message, add one
     if not has_time_context:
+        print("[DEBUG] Adding time context message to conversation history")
         conversation_history.append(get_time_context_message())
+
     # Record start time for latency tracking
     start_time = datetime.utcnow()
+    print("[DEBUG] Start time recorded")
+
+    # Add tools to the request payload
     request_payload = {
         "model": model,
         "messages": conversation_history,
-        "max_completion_tokens": 750
+        "max_completion_tokens": 750,
+        "functions": tools
     }
+    print(f"[DEBUG] Request payload prepared: {request_payload}")
+
     try:
-        # Call ChatCompletion API
+        # Call the OpenAI ChatCompletion API to get the assistant's response
+        print("[DEBUG] Calling OpenAI ChatCompletion API")
         completion = client.chat.completions.create(
             model=model,
             messages=conversation_history,
-            max_completion_tokens=750
+            max_completion_tokens=750,
+            functions=tools,
+            temperature=0.0
         )
+        print("[DEBUG] OpenAI API call successful")
+
         # Calculate latency in milliseconds
         end_time = datetime.utcnow()
         latency_ms = int((end_time - start_time).total_seconds() * 1000)
+        print(f"[DEBUG] Latency calculated: {latency_ms} ms")
+
         message = completion.choices[0].message
+        assistant_response = message.content or ""
+        print(f"[DEBUG] Assistant response: {assistant_response}")
+
+        # Check if the response contains a tool call
+        if hasattr(message, "function_call") and message.function_call is not None:
+            print("[DEBUG] Function call detected in response")
+            function_call = message.function_call
+            function_name = function_call.name
+            function_args = json.loads(function_call.arguments)
+            print(f"[DEBUG] Function call details: name={function_name}, arguments={function_args}")
+
+            # Execute the appropriate tool function
+            tool_result = None
+            if function_name == "cfr_search":
+                print("[DEBUG] Executing cfr_search tool")
+                tool_result = search_cfr_documents(**function_args)
+            elif function_name == "m21_search":
+                print("[DEBUG] Executing m21_search tool")
+                tool_result = search_m21_documents(**function_args)
+            elif function_name == "calculator":
+                print("[DEBUG] Executing calculator tool")
+                tool_result = calculator_tool(**function_args)
+
+            print(f"[DEBUG] Tool result: {tool_result}")
+
+            # Append the tool result to the conversation history
+            conversation_history.append({
+                "role": "function",
+                "name": function_name,
+                "content": tool_result
+            })
+
+            # Re-call the API with the updated conversation history
+            print("[DEBUG] Re-calling OpenAI API with updated conversation history")
+            completion = client.chat.completions.create(
+                model=model,
+                messages=conversation_history,
+                max_completion_tokens=750,
+                temperature=0.0
+            )
+            assistant_response = completion.choices[0].message.content or ""
+
+        # Append the assistant's response to the conversation history
+        assistant_message = {
+            "role": "assistant",
+            "content": assistant_response
+        }
+        conversation_history.append(assistant_message)
+
         # Calculate token usage and cost
         token_usage = completion.usage
         cost_info = calculate_token_cost(
@@ -90,12 +290,7 @@ def process_chat(user_message, conversation_history, user_id=None):
             model=model,
             completion_tokens=token_usage.completion_tokens
         )
-        assistant_response = message.content or ""
-        assistant_message = {
-            "role": "assistant",
-            "content": assistant_response
-        }
-        conversation_history.append(assistant_message)
+        print(f"[DEBUG] Token usage: {token_usage}, Cost info: {cost_info}")
 
         # Store OpenAI API log (success) and get log_id
         log = OpenAIAPILog(
@@ -111,6 +306,7 @@ def process_chat(user_message, conversation_history, user_id=None):
         ScopedSession.add(log)
         ScopedSession.commit()
         log_id = log.id
+        print(f"[DEBUG] OpenAI API log stored with log_id: {log_id}")
 
         # Store analytics data with latency and log_id
         store_request_analytics(token_usage, cost_info, latency_ms=latency_ms, model=model, log_id=log_id)
@@ -126,7 +322,9 @@ def process_chat(user_message, conversation_history, user_id=None):
             "cost": cost_info,
             "latency_ms": latency_ms
         }, 200
+
     except Exception as e:
+        print(f"[ERROR] Exception occurred: {e}")
         # Store OpenAI API log (error)
         end_time = datetime.utcnow()
         log = OpenAIAPILog(
@@ -142,10 +340,15 @@ def process_chat(user_message, conversation_history, user_id=None):
         ScopedSession.add(log)
         ScopedSession.commit()
         log_id = log.id
+        print(f"[DEBUG] Error log stored with log_id: {log_id}")
+
         # Store analytics data with error and log_id
-        store_request_analytics(token_usage if 'token_usage' in locals() else {'prompt_tokens':0,'completion_tokens':0,'total_tokens':0},
-                               cost_info if 'cost_info' in locals() else {'prompt_cost':0,'completion_cost':0,'total_cost':0},
-                               latency_ms=(int((end_time - start_time).total_seconds() * 1000)),
-                               model=model,
-                               log_id=log_id)
+        store_request_analytics(
+            token_usage if 'token_usage' in locals() else {'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0},
+            cost_info if 'cost_info' in locals() else {'prompt_cost': 0, 'completion_cost': 0, 'total_cost': 0},
+            latency_ms=(int((end_time - start_time).total_seconds() * 1000)),
+            model=model,
+            log_id=log_id
+        )
+
         return {"error": str(e)}, 500
