@@ -247,3 +247,19 @@ def search_m21_documents(query: str, top_k: int = 3) -> str:
         references_str += f"\n---\nArticle {article_num}:\n{text_snippet}\n"
     print(references_str)
     return references_str.strip()
+
+def calculator_tool(expression: str) -> str:
+    """
+    Safely evaluate a basic math expression and return the result as a string.
+    Only supports numbers and +, -, *, /, parentheses.
+    """
+    import re
+    allowed = re.compile(r'^[\d\s\+\-\*/\(\)\.]+$')
+    if not allowed.match(expression):
+        return "Invalid expression. Only numbers and +, -, *, /, parentheses are allowed."
+    try:
+        result = eval(expression, {"__builtins__": None}, {})
+        return str(result)
+    except Exception as e:
+        return f"Error evaluating expression: {e}"
+

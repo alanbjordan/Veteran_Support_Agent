@@ -32,16 +32,15 @@ from helpers.token_utils import calculate_token_cost  # Token cost calculation u
 from services.analytics_service import store_request_analytics, store_openai_api_log  
 from models.sql_models import OpenAIAPILog  # Database model for API logs
 from database.session import ScopedSession  # Database session management
-from helpers.rag_helpers import search_cfr_documents, search_m21_documents
+from helpers.rag_helpers import search_cfr_documents, search_m21_documents, calculator_tool
 
 # Initialize the OpenAI client with the API key from environment variables
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # The model used for chat completions
-model = "gpt-4.1-nano-2025-04-14"
+model = "gpt-4.1-mini-2025-04-14"
 
-
-
+# Define the tools available to the assistant
 tools = [
     {
         "type": "function",
@@ -82,8 +81,28 @@ tools = [
             "required": ["query"],
             "additionalProperties": False
         }
+    },
+    {
+        "type": "function",
+        "name": "calculator",
+        "description": (
+            "Evaluate a basic math expression. Supports numbers and +, -, *, /, parentheses. "
+            "Returns the result as a string."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "expression": {
+                    "type": "string",
+                    "description": "A valid math expression, e.g. '2 + 2 * (3 - 1)'"
+                }
+            },
+            "required": ["expression"],
+            "additionalProperties": False
+        }
     }
 ]
+
 
 def get_system_message():
     """
@@ -95,7 +114,22 @@ def get_system_message():
         "content": (
             """ 
             # Identity
-            
+            You are a Department of Veterans Affairs (VA) employee and a helpful assistant skilled at answering questions about VA regulations,
+            including 38 CFR and the M21 Manual of VA Regulations. You are knowledgeable about VA policies, procedures, and benefits.
+            You are also familiar with the VA's mission and values, and you strive to provide accurate and helpful information to veterans and their families.
+            # Instructions
+            If you do not have the answer to a question, you have tools available to you to search the 38 CFR and M21 Manual of VA Regulations.
+            The final inquiry should be succinct, clear, and maintain the original intent while
+            aligning with legal and regulatory terminology.
+            # Note
+            You are not a legal expert, and your responses should not be considered legal advice.
+            If the user requires legal advice, you should recommend that they consult with a qualified attorney or legal expert.
+            # Tone
+            Your tone should be formal, respectful, and professional. You should avoid using slang or informal language.
+            You should also avoid using jargon or technical terms that the user may not understand.
+            If you need to use technical terms, you should explain them clearly and concisely
+            You should be patient and empathetic, and you should strive to provide clear and helpful answers to their questions.
+
             """
         )
     }
@@ -189,7 +223,8 @@ def process_chat(user_message, conversation_history, user_id=None):
             model=model,
             messages=conversation_history,
             max_completion_tokens=750,
-            functions=tools
+            functions=tools,
+            temperature=0.0
         )
         print("[DEBUG] OpenAI API call successful")
 
@@ -202,7 +237,7 @@ def process_chat(user_message, conversation_history, user_id=None):
         assistant_response = message.content or ""
         print(f"[DEBUG] Assistant response: {assistant_response}")
 
-        # Fix: Use attribute access instead of .get for ChatCompletionMessage
+        # Check if the response contains a tool call
         if hasattr(message, "function_call") and message.function_call is not None:
             print("[DEBUG] Function call detected in response")
             function_call = message.function_call
@@ -218,6 +253,9 @@ def process_chat(user_message, conversation_history, user_id=None):
             elif function_name == "m21_search":
                 print("[DEBUG] Executing m21_search tool")
                 tool_result = search_m21_documents(**function_args)
+            elif function_name == "calculator":
+                print("[DEBUG] Executing calculator tool")
+                tool_result = calculator_tool(**function_args)
 
             print(f"[DEBUG] Tool result: {tool_result}")
 
@@ -233,7 +271,8 @@ def process_chat(user_message, conversation_history, user_id=None):
             completion = client.chat.completions.create(
                 model=model,
                 messages=conversation_history,
-                max_completion_tokens=750
+                max_completion_tokens=750,
+                temperature=0.0
             )
             assistant_response = completion.choices[0].message.content or ""
 
