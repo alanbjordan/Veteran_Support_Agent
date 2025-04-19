@@ -1,6 +1,10 @@
+# database_routes.py
+
 from flask import Blueprint, request, jsonify
 from helpers.cors_helpers import pre_authorized_cors_preflight
 from services.data_service import get_all_data, search_data
+from database import db
+from sqlalchemy import text
 
 database_bp = Blueprint("database", __name__)
 
@@ -33,3 +37,16 @@ def search_cars_endpoint():
         print(f"Error in search endpoint: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+
+@pre_authorized_cors_preflight
+@database_bp.route("/db-check", methods=["GET"])
+def db_check():
+    # Get current database name
+    result = db.session.execute(text("SELECT current_database();"))
+    db_name = result.scalar()
+    # Get all tables in public schema
+    tables = db.session.execute(
+        text("SELECT tablename FROM pg_tables WHERE schemaname='public';")
+    ).fetchall()
+    table_list = [t[0] for t in tables]
+    return jsonify({"database": db_name, "tables": table_list})

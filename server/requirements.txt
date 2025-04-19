@@ -59,3 +59,4 @@ sklearn-compat==0.1.3
 SQLAlchemy==2.0.40
 tqdm==4.67.1
 python-dotenv==0.21.0
+sqlalchemy
