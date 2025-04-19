@@ -29,9 +29,10 @@ from openai import OpenAI  # OpenAI API client
 
 # Internal module imports
 from helpers.token_utils import calculate_token_cost  # Token cost calculation utility
-from services.analytics_service import store_request_analytics, store_openai_api_log  # Analytics and logging
+from services.analytics_service import store_request_analytics, store_openai_api_log  
 from models.sql_models import OpenAIAPILog  # Database model for API logs
 from database.session import ScopedSession  # Database session management
+from helpers.rag_helpers import search_cfr_documents, search_m21_documents
 
 # Initialize the OpenAI client with the API key from environment variables
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -39,6 +40,50 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # The model used for chat completions
 model = "gpt-4.1-nano-2025-04-14"
 
+
+
+tools = [
+    {
+        "type": "function",
+        "name": "cfr_search",
+        "description": (
+            "Search 38 CFR regulations. "
+            "Transforms the user query, generates embeddings, and retrieves relevant CFR sections "
+            "using a Pinecone search."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "The user query for searching 38 CFR regulations."
+                }
+            },
+            "required": ["query"],
+            "additionalProperties": False
+        }
+    },
+    {
+        "type": "function",
+        "name": "m21_search",
+        "description": (
+            "Search the M21 Manual of VA Regulations. "
+            "Transforms the user query, generates embeddings, and retrieves relevant articles "
+            "using a Pinecone search."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "The user query for searching the M21 Manual."
+                }
+            },
+            "required": ["query"],
+            "additionalProperties": False
+        }
+    }
+]
 
 def get_system_message():
     """
