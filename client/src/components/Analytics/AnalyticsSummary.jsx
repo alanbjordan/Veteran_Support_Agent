@@ -7,7 +7,7 @@ import React from 'react';
 import AnalyticsCard from './AnalyticsCard';
 import { FaDollarSign, FaChartLine } from 'react-icons/fa';
 
-const AnalyticsSummary = ({ data, onLatencyClick }) => {
+const AnalyticsSummary = ({ data, onLatencyClick, onAverageCostClick }) => {
   // Add null checks for all values
   const totalCost = data?.totalCost || 0;
   const averageCostPerRequest = data?.averageCostPerRequest || 0;
@@ -29,6 +29,7 @@ const AnalyticsSummary = ({ data, onLatencyClick }) => {
           title="Average Cost"
           value={`$${averageCostPerRequest.toFixed(5)}/req`}
           icon={<FaChartLine />}
+          onClick={onAverageCostClick}
         />
         <AnalyticsCard 
           title="Avg Latency" 

@@ -9,7 +9,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import AnalyticsSummary from './AnalyticsSummary';
 import AnalyticsTable from './AnalyticsTable';
 import AnalyticsRequestModal from './AnalyticsRequestModal';
-import AnalyticsLatencyModal from './AnalyticsLatencyModal';
+import AnalyticsChartModal from './AnalyticsChartModal';
 import apiClient from '../../utils/apiClient';
 import './Analytics.css';
 
@@ -29,6 +29,7 @@ const Analytics = () => {
   const [isFetching, setIsFetching] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showLatencyModal, setShowLatencyModal] = useState(false);
+  const [showAverageCostModal, setShowAverageCostModal] = useState(false);
   const lastDataRef = useRef(null);
 
   // Function to fetch analytics data
@@ -151,7 +152,8 @@ const Analytics = () => {
       <div className="analytics-content">
         <AnalyticsSummary 
           data={analyticsData} 
-          onLatencyClick={() => setShowLatencyModal(true)} 
+          onLatencyClick={() => setShowLatencyModal(true)}
+          onAverageCostClick={() => setShowAverageCostModal(true)}
         />
         <AnalyticsTable 
           requests={analyticsData.requestsByDate} 
@@ -164,13 +166,38 @@ const Analytics = () => {
           onClose={() => setSelectedRequest(null)} 
         />
       )}
-      {showLatencyModal && (
-        <AnalyticsLatencyModal
-          open={showLatencyModal}
-          onClose={() => setShowLatencyModal(false)}
-          requests={analyticsData.requestsByDate}
-        />
-      )}
+      {/* Latency Modal (Scatter) */}
+      <AnalyticsChartModal
+        open={showLatencyModal}
+        onClose={() => setShowLatencyModal(false)}
+        data={(analyticsData.requestsByDate || []).filter(req => req.latency_ms !== undefined && req.sentTokens !== undefined && req.receivedTokens !== undefined).map(req => ({
+          totalTokens: (req.sentTokens ?? 0) + (req.receivedTokens ?? 0),
+          latency: req.latency_ms ?? req.latency ?? 0
+        }))}
+        title="Latency by Token Count"
+        xKey="totalTokens"
+        yKey="latency"
+        xLabel="Total Tokens"
+        yLabel="Latency (ms)"
+        chartType="scatter"
+        name="Requests"
+      />
+      {/* Average Cost Modal (Line) */}
+      <AnalyticsChartModal
+        open={showAverageCostModal}
+        onClose={() => setShowAverageCostModal(false)}
+        data={(analyticsData.requestsByDate || []).map(d => ({
+          totalTokens: (d.totalSentTokens ?? 0) + (d.totalReceivedTokens ?? 0),
+          averageCost: d.averageCostPerRequest || 0
+        }))}
+        title="Average Cost Per Request by Total Tokens"
+        xKey="totalTokens"
+        yKey="averageCost"
+        xLabel="Total Tokens"
+        yLabel="Average Cost ($)"
+        chartType="line"
+        name="Average Cost"
+      />
     </div>
   );
 };
