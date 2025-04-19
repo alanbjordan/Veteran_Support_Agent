@@ -170,3 +170,9 @@ def download_report():
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+    
+@pre_authorized_cors_preflight
+@analytics_bp.route("/analytics-check", methods=["GET"])
+def analytics_check():
+    """Check the analytics service status."""
+    return jsonify({"status": "Analytics service is running"}), 200

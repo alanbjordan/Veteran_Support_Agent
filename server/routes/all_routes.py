@@ -13,6 +13,4 @@ def register_routes(app):
     app.register_blueprint(database_bp, url_prefix="/api")
     app.register_blueprint(analytics_bp, url_prefix="/api")
     
-    # Add more blueprints here as needed
-    
     return app

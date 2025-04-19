@@ -60,7 +60,8 @@ def store_openai_api_log(
     status=None,
     error_message=None
 ):
-    """Store OpenAI API request/response log."""
+    """Store OpenAI API request/response log, rolling back on error."""
+    session = ScopedSession()   # get a fresh session
     log = OpenAIAPILog(
         user_id=user_id,
         request_prompt=request_prompt,
@@ -72,10 +73,16 @@ def store_openai_api_log(
         error_message=error_message
     )
     try:
-        ScopedSession.add(log)
-        ScopedSession.commit()
-        return True
+        session.add(log)
+        session.commit()
+        ScopedSession.remove()  # Moved ScopedSession.remove() outside the try block
+        return True, log.id
+
     except Exception as e:
-        ScopedSession.rollback()
-        print(f"Failed to store OpenAI API log: {e}")
-        return False
+        # Roll back the failed transaction
+        session.rollback()
+        print(f"[DB ERROR] Failed to store OpenAI API log: {e}")
+        return False, None
+    finally:
+        # Close out this session (important with scoped_session)
+        session.close()

@@ -15,6 +15,7 @@ def create_app():
     # Apply configuration from Config class
     app.config.from_object(Config)
 
+
     # Initialize SQLAlchemy and Bcrypt with the app instance
     db.init_app(app)
     bcrypt.init_app(app)

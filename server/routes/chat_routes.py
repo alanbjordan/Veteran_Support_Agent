@@ -69,3 +69,10 @@ def tool_call_result():
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
+
+@pre_authorized_cors_preflight
+@chat_bp.route("/chat-check", methods=["GET"])
+def chat_check():
+    """Check the chat service status."""
+    return jsonify({"status": "Chat service is running"}), 200

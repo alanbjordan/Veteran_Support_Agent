@@ -11,6 +11,10 @@ const apiClient = axios.create({
   baseURL: DEFAULT_API_URL,
   headers: {
     'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*', 
+    'Access-Control-Allow-Credentials': true,
+    'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Authorization',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   },
   withCredentials: true, // Important for CORS with credentials
 });
@@ -75,11 +79,5 @@ apiClient.interceptors.response.use(
   }
 );
 
-// API utility functions
-export const uploadFile = (formData) => {
-  return apiClient.post('/test', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
-};
 
 export default apiClient; 
