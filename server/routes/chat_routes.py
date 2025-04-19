@@ -1,18 +1,14 @@
+# chat_routes.py
+
+# Import necessary modules
 from flask import Blueprint, request, jsonify
 from helpers.cors_helpers import pre_authorized_cors_preflight
 from services.chat_service import process_chat
 
+# Blueprint for chat routes
 chat_bp = Blueprint("chat", __name__)
 
-# Update to current model version
-model = "gpt-3.5-turbo"  # or your preferred model
-
-def validate_model_version():
-    """Validate that the model version is supported."""
-    supported_models = ["gpt-3.5-turbo", "gpt-4"]
-    if model not in supported_models:
-        raise ValueError(f"Unsupported model version. Please use one of: {', '.join(supported_models)}")
-
+# Define the chat route
 @pre_authorized_cors_preflight
 @chat_bp.route("/chat", methods=["POST"])
 def chat():
@@ -23,9 +19,6 @@ def chat():
 
         if not data:
             return jsonify({"error": "Missing JSON body"}), 400
-
-        # Validate model version
-        validate_model_version()
 
         # Get the user message and conversation history
         user_message = data.get("message", "").strip()
@@ -51,6 +44,7 @@ def chat():
         traceback.print_exc()
         return jsonify({"error": "An unexpected error occurred. Please try again later."}), 500
 
+# Define the tool call result route
 @pre_authorized_cors_preflight
 @chat_bp.route("/tool-call-result", methods=["POST"])
 def tool_call_result():
