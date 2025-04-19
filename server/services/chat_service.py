@@ -1,23 +1,50 @@
 # server/services/chat_service.py
 
-import os
-import json
-from openai import OpenAI
-from datetime import datetime
-import pytz
-from helpers.token_utils import calculate_token_cost
-from services.analytics_service import store_request_analytics, store_openai_api_log
-from models.sql_models import OpenAIAPILog
-from database.session import ScopedSession
+"""
+Chat Service Module
+-------------------
+This module provides the core logic for handling chat interactions with the OpenAI API, including:
+- Preparing system and time context messages
+- Managing conversation history
+- Calling the OpenAI ChatCompletion API
+- Logging API requests and responses
+- Calculating token usage and cost
+- Storing analytics and error logs
 
-# Initialize the OpenAI client
+Functions:
+    get_system_message(): Returns the default system prompt for the assistant.
+    get_time_context_message(): Returns a system message with the current EST time.
+    process_chat(user_message, conversation_history, user_id=None):
+        Handles a user chat message, manages conversation state, calls the LLM, logs analytics, and returns the response.
+"""
+
+# Standard library imports
+import os  # For environment variable access
+import json  # For JSON serialization
+from datetime import datetime  # For timestamping
+import pytz  # For timezone handling
+
+# Third-party imports
+from openai import OpenAI  # OpenAI API client
+
+# Internal module imports
+from helpers.token_utils import calculate_token_cost  # Token cost calculation utility
+from services.analytics_service import store_request_analytics, store_openai_api_log  # Analytics and logging
+from models.sql_models import OpenAIAPILog  # Database model for API logs
+from database.session import ScopedSession  # Database session management
+
+# Initialize the OpenAI client with the API key from environment variables
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# This is the model that we are using for the chat service
-model="gpt-4.1-nano-2025-04-14"
+# The model used for chat completions
+model = "gpt-4.1-nano-2025-04-14"
+
 
 def get_system_message():
-    """Return the system message for the chat."""
+    """
+    Return the system message for the chat assistant.
+    This message sets the assistant's behavior/personality for the conversation.
+    """
     return {
         "role": "system",
         "content": (
@@ -27,41 +54,59 @@ def get_system_message():
         )
     }
 
+
 def get_time_context_message():
-    """Get the current time in EST and return a time context message."""
+    """
+    Get the current time in EST and return a time context message for the chat.
+    This message provides the assistant with the current time context in the conversation.
+    """
     try:
-        # Get current time in EST using a reliable method
+        # Get current time in EST using pytz
         est = pytz.timezone('US/Eastern')
         current_time = datetime.now(est)
         current_time_formatted = current_time.strftime('%Y-%m-%d %H:%M:%S EST')
     except Exception as e:
-        # Fallback to a simpler approach
+        # Fallback to manual calculation if pytz fails
         from datetime import datetime, timedelta
-        # EST is UTC-5
         utc_now = datetime.utcnow()
         est_offset = timedelta(hours=-5)
         est_time = utc_now + est_offset
         current_time_formatted = est_time.strftime('%Y-%m-%d %H:%M:%S EST')
-    
     return {
         "role": "system",
         "content": f"Current time: {current_time_formatted}"
     }
 
+
 def process_chat(user_message, conversation_history, user_id=None):
-    """Process a chat message and return the response."""
+    """
+    Process a chat message and return the assistant's response.
+    Handles conversation history, system/time context, OpenAI API call, logging, and analytics.
+    Args:
+        user_message (str): The user's message to the assistant.
+        conversation_history (list): The list of previous messages in the conversation.
+        user_id (optional): The ID of the user (for logging/analytics).
+    Returns:
+        tuple: (response dict, HTTP status code)
+    """
     if not user_message:
         return {"error": "No 'message' provided"}, 400
     # Ensure conversation_history is a list
     if not isinstance(conversation_history, list):
         conversation_history = []
     # Check if the conversation history already has a system message
-    has_system_message = any(msg.get("role") == "system" and "You are a helpful assistant" in msg.get("content", "") for msg in conversation_history)
+    has_system_message = any(
+        msg.get("role") == "system" and "You are a helpful assistant" in msg.get("content", "")
+        for msg in conversation_history
+    )
     # If no conversation history or no system message, add the system message
     if not conversation_history or not has_system_message:
         conversation_history.insert(0, get_system_message())
     # Check if there's a time context message in the conversation history
-    has_time_context = any(msg.get("role") == "system" and "Current time:" in msg.get("content", "") for msg in conversation_history)
+    has_time_context = any(
+        msg.get("role") == "system" and "Current time:" in msg.get("content", "")
+        for msg in conversation_history
+    )
     # If no time context message, add one
     if not has_time_context:
         conversation_history.append(get_time_context_message())
@@ -73,7 +118,7 @@ def process_chat(user_message, conversation_history, user_id=None):
         "max_completion_tokens": 750
     }
     try:
-        # Call ChatCompletion API
+        # Call the OpenAI ChatCompletion API to get the assistant's response
         completion = client.chat.completions.create(
             model=model,
             messages=conversation_history,
@@ -143,9 +188,11 @@ def process_chat(user_message, conversation_history, user_id=None):
         ScopedSession.commit()
         log_id = log.id
         # Store analytics data with error and log_id
-        store_request_analytics(token_usage if 'token_usage' in locals() else {'prompt_tokens':0,'completion_tokens':0,'total_tokens':0},
-                               cost_info if 'cost_info' in locals() else {'prompt_cost':0,'completion_cost':0,'total_cost':0},
-                               latency_ms=(int((end_time - start_time).total_seconds() * 1000)),
-                               model=model,
-                               log_id=log_id)
+        store_request_analytics(
+            token_usage if 'token_usage' in locals() else {'prompt_tokens':0,'completion_tokens':0,'total_tokens':0},
+            cost_info if 'cost_info' in locals() else {'prompt_cost':0,'completion_cost':0,'total_cost':0},
+            latency_ms=(int((end_time - start_time).total_seconds() * 1000)),
+            model=model,
+            log_id=log_id
+        )
         return {"error": str(e)}, 500
