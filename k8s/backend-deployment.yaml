@@ -14,10 +14,11 @@ spec:
       labels:
         app: backend                   # Must match the selector above
     spec:
+      imagePullSecrets:
+          - name: ghcr-secret
       containers:
         - name: backend                # Identifier for this container within the Pod
-          image: ghcr.io/alanbjordan/veteran-support-agent-backend:latest 
-                                      
+          image: ghcr.io/alanbjordan/veteran-support-agent-backend:latest                          
           ports:
             - containerPort: 5000      # Expose port 5000 inside the Pod
           envFrom:

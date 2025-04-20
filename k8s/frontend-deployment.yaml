@@ -14,6 +14,8 @@ spec:
       labels:
         app: frontend                   # Must match the selector above
     spec:
+      imagePullSecrets:
+          - name: ghcr-secret
       containers:
         - name: frontend               # Identifier for this container within the Pod
           image: ghcr.io/alanbjordan/veteran-support-agent-frontend:latest 
