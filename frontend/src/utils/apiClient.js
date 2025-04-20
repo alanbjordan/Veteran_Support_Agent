@@ -3,8 +3,11 @@
 import axios from 'axios';
 
 // API URLs configuration
-const DEFAULT_API_URL = process.env.REACT_APP_API_URL; 
-const BACKUP_API_URL = 'http://localhost:5000/api';
+const DEFAULT_API_URL = process.env.REACT_APP_API_URL; //Default API URL from environment variables
+// If not set, fallback to localhost
+if (!DEFAULT_API_URL) {
+  console.warn('REACT_APP_API_URL is not set. Falling back to localhost.');
+  process.env.REACT_APP_API_URL = 'http://localhost:5000/api';} // Default to localhost
 
 // Create an axios instance with default config
 const apiClient = axios.create({
