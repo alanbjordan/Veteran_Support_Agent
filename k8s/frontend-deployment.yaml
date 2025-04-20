@@ -1,0 +1,31 @@
+apiVersion: apps/v1                    # We’re managing higher‑level Deployment objects
+kind: Deployment                       # A Deployment maintains a ReplicaSet of Pods
+metadata:
+  name: frontend                        # Unique name in the cluster
+  labels:
+    app: frontend                       # Labels let Services/other controllers find it
+spec:
+  replicas: 2                          # Desired number of Pods running at any time
+  selector:
+    matchLabels:
+      app: frontend                     # This ties the Deployment to Pods with this label
+  template:                            # Pod “template”—defines how each Pod should look
+    metadata:
+      labels:
+        app: frontend                   # Must match the selector above
+    spec:
+      containers:
+        - name: frontend               # Identifier for this container within the Pod
+          image: ghcr.io/alanbjordan/veteran-support-agent-frontend:latest 
+                                        # GHCR registry
+          ports:
+            - containerPort: 80        # Expose port 80 inside the Pod
+          envFrom:
+            - secretRef:
+                name: frontend-secrets  # Inject all entries from the Secret as ENV vars
+          readinessProbe:              # ensures Pod is “Ready”
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 10
