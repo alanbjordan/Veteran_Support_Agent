@@ -3,8 +3,9 @@
 import axios from 'axios';
 
 // API URLs configuration
-const DEFAULT_API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api'; // Default API URL from environment variables or fallback
-
+const BACKUP_API_URL ='http://localhost:5001/api'; // Backup API URL from environment variables or fallback
+const DEFAULT_API_URL = process.env.REACT_APP_API_URL || BACKUP_API_URL; // Default API URL from environment variables or fallback
+// Check if the environment variable is set
 if (!process.env.REACT_APP_API_URL) {
   console.warn('REACT_APP_API_URL is not set. Falling back to localhost.');
 }
