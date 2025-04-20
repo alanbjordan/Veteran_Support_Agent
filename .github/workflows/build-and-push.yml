@@ -7,8 +7,8 @@ on:
 env:
   REGISTRY: ghcr.io
   ORG:     alanbjordan  
-  BACKEND_IMAGE: ${{ env.REGISTRY }}/${{ env.ORG }}/veteran-claims-backend
-  CLIENT_IMAGE:  ${{ env.REGISTRY }}/${{ env.ORG }}/veteran-claims-frontend
+  BACKEND_IMAGE: ${{ env.REGISTRY }}/${{ env.ORG }}/veteran-support-agent-backend
+  CLIENT_IMAGE:  ${{ env.REGISTRY }}/${{ env.ORG }}/veteran-support-agent-frontend
   VERSION:     latest
 
 jobs:
