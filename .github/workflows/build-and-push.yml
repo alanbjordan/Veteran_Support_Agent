@@ -44,3 +44,5 @@ jobs:
           tags: |
             ghcr.io/alanbjordan/veteran-support-agent-frontend:latest
             ghcr.io/alanbjordan/veteran-support-agent-frontend:${{ github.sha }}
+          build-args: |
+            REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }}
