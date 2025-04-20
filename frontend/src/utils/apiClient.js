@@ -3,7 +3,7 @@
 import axios from 'axios';
 
 // API URLs configuration
-const DEFAULT_API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const DEFAULT_API_URL = process.env.REACT_APP_API_URL || 'http://backend:5000/api';
 const BACKUP_API_URL = 'http://localhost:5000/api';
 
 // Create an axios instance with default config
